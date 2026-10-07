@@ -26,7 +26,7 @@ import com.example.techtokensss.Pantallas.Dashboard.DashboardScreen
 import com.example.techtokensss.Pantallas.Dashboard.DashboardUsuarioScreen
 import com.example.techtokensss.Pantallas.Inicio.InicioScreen
 import com.example.techtokensss.Pantallas.Login.LoginScreen
-import com.example.techtokensss.Pantallas.Perfil.PerfilScreen
+import com.example.techtokensss.Pantallas.Perfil.UserScreen
 import com.example.techtokensss.Pantallas.Registro.RegistroScreen
 
 
@@ -304,7 +304,7 @@ fun AppNavigation(
 
         composable("perfil") {
 
-            PerfilScreen(
+            UserScreen(
 
                 onVolverClick = {
 
