@@ -14,5 +14,7 @@ data class Perfil(
     val apellidos: String,
 
     @SerialName("numero_contacto")
-    val numeroContacto: String
+    val numeroContacto: String,
+
+    val rol: String
 )

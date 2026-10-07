@@ -35,7 +35,8 @@ class RegistroRepository {
                 idPerfil = idUsuario,
                 nombres = nombres,
                 apellidos = apellidos,
-                numeroContacto = numeroContacto
+                numeroContacto = numeroContacto,
+                rol = "usuario"
             )
 
 

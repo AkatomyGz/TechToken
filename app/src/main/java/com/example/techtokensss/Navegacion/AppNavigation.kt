@@ -1,15 +1,29 @@
 package com.example.techtokensss.Navegacion
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 
 import com.example.techtokensss.Datos.Supabase.AuthSupa
+import com.example.techtokensss.Datos.Supabase.PerfilRepository
 
 import com.example.techtokensss.Pantallas.Configs.ConfiguracionScreen
 import com.example.techtokensss.Pantallas.Dashboard.DashboardScreen
+import com.example.techtokensss.Pantallas.Dashboard.DashboardUsuarioScreen
 import com.example.techtokensss.Pantallas.Inicio.InicioScreen
 import com.example.techtokensss.Pantallas.Login.LoginScreen
 import com.example.techtokensss.Pantallas.Perfil.PerfilScreen
@@ -28,6 +42,10 @@ fun AppNavigation(
         navController = navController,
         startDestination = "inicio"
     ) {
+
+        // --------------------------------------------------
+        // INICIO
+        // --------------------------------------------------
 
         composable("inicio") {
 
@@ -57,6 +75,9 @@ fun AppNavigation(
         }
 
 
+        // --------------------------------------------------
+        // LOGIN
+        // --------------------------------------------------
 
         composable("login") {
 
@@ -94,6 +115,10 @@ fun AppNavigation(
         }
 
 
+        // --------------------------------------------------
+        // REGISTRO
+        // --------------------------------------------------
+
         composable("registro") {
 
             RegistroScreen(
@@ -115,36 +140,147 @@ fun AppNavigation(
         }
 
 
+        // --------------------------------------------------
+        // DASHBOARD
+        // --------------------------------------------------
+
         composable("dashboard") {
 
-            DashboardScreen(
+            val perfilRepository = remember {
+                PerfilRepository()
+            }
 
-                onMenuClick = {
+            var rol by remember {
+                mutableStateOf<String?>(null)
+            }
 
-                },
+            var error by remember {
+                mutableStateOf<String?>(null)
+            }
 
-                onPerfilClick = {
+            LaunchedEffect(Unit) {
 
-                    navController.navigate("perfil")
-                },
+                val resultado = perfilRepository.obtenerPerfilActual()
 
-                onCasosClick = {
+                if (resultado.isSuccess) {
 
-                    navController.navigate("casos")
-                },
+                    rol = resultado.getOrNull()?.rol
 
-                onConfiguracionClick = {
+                } else {
 
-                    navController.navigate("configuracion")
-                },
-
-                onCerrarSesionClick = {
-
-                    navController.navigate("login")
+                    error = resultado.exceptionOrNull()?.message
+                        ?: "No se pudo obtener el perfil."
                 }
-            )
+            }
+
+
+            // Mientras buscamos el rol
+            if (rol == null && error == null) {
+
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+
+                    CircularProgressIndicator()
+
+                    Text(
+                        text = "Cargando perfil..."
+                    )
+                }
+            }
+
+
+            // Si ocurrió un error
+            if (error != null) {
+
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+
+                    Text(
+                        text = error ?: "Error desconocido"
+                    )
+                }
+            }
+
+
+            // Cuando ya conocemos el rol
+            when (rol) {
+
+                "usuario" -> {
+
+                    DashboardUsuarioScreen(
+
+                        onMenuClick = {
+                        },
+
+                        onPerfilClick = {
+
+                            navController.navigate("perfil")
+                        },
+
+                        onCasosClick = {
+
+                            navController.navigate("casos")
+                        },
+
+                        onConfiguracionClick = {
+
+                            navController.navigate("configuracion")
+                        },
+
+                        onCerrarSesionClick = {
+
+                            navController.navigate("login")
+                        },
+
+                        onCrearCasoClick = {
+
+                            // Próximamente
+                        }
+                    )
+                }
+
+
+                "tecnico" -> {
+
+                    DashboardScreen(
+
+                        onMenuClick = {
+                        },
+
+                        onPerfilClick = {
+
+                            navController.navigate("perfil")
+                        },
+
+                        onCasosClick = {
+
+                            navController.navigate("casos")
+                        },
+
+                        onConfiguracionClick = {
+
+                            navController.navigate("configuracion")
+                        },
+
+                        onCerrarSesionClick = {
+
+                            navController.navigate("login")
+                        }
+                    )
+                }
+            }
         }
 
+
+        // --------------------------------------------------
+        // CONFIGURACIÓN
+        // --------------------------------------------------
 
         composable("configuracion") {
 
@@ -161,6 +297,10 @@ fun AppNavigation(
             )
         }
 
+
+        // --------------------------------------------------
+        // PERFIL
+        // --------------------------------------------------
 
         composable("perfil") {
 
