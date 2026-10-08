@@ -1,6 +1,7 @@
 package com.example.techtokensss.Pantallas.RegistroCaso
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,9 +9,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Image
+
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -19,6 +22,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 
@@ -28,6 +32,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -62,12 +67,23 @@ fun CrearCasoScreen(
 
 
     val categorias = listOf(
-        "Software" to "Problemas relacionados con programas instalados o herramientas digitales.",
-        "Hardware" to "Problemas relacionados con componentes físicos del equipo o dispositivos.",
-        "Cuenta" to "Problemas relacionados con cuentas, contraseñas, permisos o acceso de usuarios.",
-        "Aplicación" to "Problemas relacionados con el funcionamiento o uso de una aplicación específica.",
-        "Conectividad" to "Problemas relacionados con Internet, Wi-Fi, redes o conexión entre dispositivos.",
-        "Otro" to "Problemas que no corresponden a ninguna de las categorías anteriores."
+        "Software" to
+                "Problemas relacionados con programas instalados o herramientas digitales.",
+
+        "Hardware" to
+                "Problemas relacionados con componentes físicos del equipo o dispositivos.",
+
+        "Cuenta" to
+                "Problemas relacionados con cuentas, contraseñas, permisos o acceso de usuarios.",
+
+        "Aplicación" to
+                "Problemas relacionados con el funcionamiento o uso de una aplicación específica.",
+
+        "Conectividad" to
+                "Problemas relacionados con Internet, Wi-Fi, redes o conexión entre dispositivos.",
+
+        "Otro" to
+                "Problemas que no corresponden a ninguna de las categorías anteriores."
     )
 
 
@@ -88,7 +104,8 @@ fun CrearCasoScreen(
         // Barra superior
 
         Row(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
 
             IconButton(
@@ -104,10 +121,7 @@ fun CrearCasoScreen(
             Text(
                 text = "Crear caso",
                 fontSize = 24.sp,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(
-                    top = 12.dp
-                )
+                color = MaterialTheme.colorScheme.onBackground
             )
         }
 
@@ -281,6 +295,104 @@ fun CrearCasoScreen(
                 fontSize = 13.sp
             )
         }
+
+
+        Spacer(
+            modifier = Modifier.height(28.dp)
+        )
+
+
+        // Evidencias
+
+        Text(
+            text = "Evidencias",
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = 18.sp
+        )
+
+        Spacer(
+            modifier = Modifier.height(6.dp)
+        )
+
+        Text(
+            text = "Puedes adjuntar imágenes o documentos relacionados con el caso.",
+            color = MaterialTheme.colorScheme.onBackground.copy(
+                alpha = 0.7f
+            ),
+            fontSize = 13.sp
+        )
+
+        Spacer(
+            modifier = Modifier.height(14.dp)
+        )
+
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+
+            // Imagen
+
+            OutlinedButton(
+                onClick = {
+                    // Próximamente
+                },
+                enabled = false,
+                modifier = Modifier.weight(1f)
+            ) {
+
+                Icon(
+                    imageVector = Icons.Default.Image,
+                    contentDescription = "Imagen"
+                )
+
+                Spacer(
+                    modifier = Modifier.weight(1f)
+                )
+
+                Text(
+                    text = "Imagen"
+                )
+            }
+
+
+            // Documento
+
+            OutlinedButton(
+                onClick = {
+                    // Próximamente
+                },
+                enabled = false,
+                modifier = Modifier.weight(1f)
+            ) {
+
+                Icon(
+                    imageVector = Icons.Default.Description,
+                    contentDescription = "Documento"
+                )
+
+                Spacer(
+                    modifier = Modifier.weight(1f)
+                )
+
+                Text(
+                    text = "Documento"
+                )
+            }
+        }
+
+        Spacer(
+            modifier = Modifier.height(8.dp)
+        )
+
+        Text(
+            text = "Funcionalidad disponible próximamente.",
+            color = MaterialTheme.colorScheme.onBackground.copy(
+                alpha = 0.5f
+            ),
+            fontSize = 12.sp
+        )
 
 
         Spacer(
