@@ -66,4 +66,25 @@ class CasoRepository {
             Result.failure(e)
         }
     }
+
+
+    suspend fun obtenerCategorias(): Result<List<Categoria>> {
+
+        return try {
+
+            // Obtener todas las categorías
+
+            val categorias = supabase
+                .from("categorias")
+                .select(columns = Columns.ALL)
+                .decodeList<Categoria>()
+
+
+            Result.success(categorias)
+
+        } catch (e: Exception) {
+
+            Result.failure(e)
+        }
+    }
 }
