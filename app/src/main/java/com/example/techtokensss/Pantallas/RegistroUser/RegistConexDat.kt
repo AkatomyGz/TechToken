@@ -1,4 +1,4 @@
-package com.example.techtokensss.Pantallas.Registro
+package com.example.techtokensss.Pantallas.RegistroUser
 
 import com.example.techtokensss.Datos.Modelos.Perfil
 import com.example.techtokensss.Datos.Supabase.AuthSupa

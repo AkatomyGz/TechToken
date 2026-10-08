@@ -1,4 +1,4 @@
-package com.example.techtokensss.Pantallas.Registro
+package com.example.techtokensss.Pantallas.RegistroUser
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

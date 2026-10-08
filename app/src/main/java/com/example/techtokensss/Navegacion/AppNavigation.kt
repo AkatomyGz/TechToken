@@ -27,7 +27,8 @@ import com.example.techtokensss.Pantallas.Dashboard.DashboardUsuarioScreen
 import com.example.techtokensss.Pantallas.Inicio.InicioScreen
 import com.example.techtokensss.Pantallas.Login.LoginScreen
 import com.example.techtokensss.Pantallas.Perfil.UserScreen
-import com.example.techtokensss.Pantallas.Registro.RegistroScreen
+import com.example.techtokensss.Pantallas.RegistroUser.RegistroScreen
+import com.example.techtokensss.Pantallas.RegistroCaso.CrearCasoScreen
 
 
 @Composable
@@ -240,7 +241,8 @@ fun AppNavigation(
 
                         onCrearCasoClick = {
 
-                            // Próximamente
+                            navController.navigate(route= "RegisCaso")
+
                         }
                     )
                 }
@@ -309,6 +311,22 @@ fun AppNavigation(
                 onVolverClick = {
 
                     navController.popBackStack()
+                }
+            )
+        }
+
+        composable(route = "RegisCaso") {
+
+            CrearCasoScreen(
+
+                onVolverClick = {
+                    navController.popBackStack()
+                },
+
+                onCrearCasoClick = { asunto, descripcion, categoria ->
+
+                    navController.popBackStack()
+
                 }
             )
         }
