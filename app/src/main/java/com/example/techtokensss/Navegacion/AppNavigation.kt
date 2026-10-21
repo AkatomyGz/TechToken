@@ -20,6 +20,7 @@ import androidx.navigation.compose.rememberNavController
 
 import com.example.techtokensss.Datos.Supabase.AuthSupa
 import com.example.techtokensss.Datos.Supabase.PerfilRepository
+import com.example.techtokensss.Pantallas.Casos.CasosUsuarioScreen
 
 import com.example.techtokensss.Pantallas.Configs.ConfiguracionScreen
 import com.example.techtokensss.Pantallas.Dashboard.DashboardScreen
@@ -209,70 +210,58 @@ fun AppNavigation(
             }
 
 
+
             // Cuando ya conocemos el rol
             when (rol) {
 
                 "usuario" -> {
-
                     DashboardUsuarioScreen(
-
-                        onMenuClick = {
-                        },
+                        onMenuClick = {},
 
                         onPerfilClick = {
-
                             navController.navigate("perfil")
                         },
 
                         onCasosClick = {
-
-                            navController.navigate("casos")
+                            navController.navigate("CasosUsuario")
                         },
 
                         onConfiguracionClick = {
-
                             navController.navigate("configuracion")
                         },
 
                         onCerrarSesionClick = {
-
-                            navController.navigate("login")
+                            navController.navigate("login") {
+                                popUpTo(0) { inclusive = true }
+                            }
                         },
 
                         onCrearCasoClick = {
-
-                            navController.navigate(route= "RegisCaso")
-
+                            navController.navigate("RegisCaso")
                         }
                     )
                 }
 
-
                 "tecnico" -> {
-
                     DashboardScreen(
-
-                        onMenuClick = {
-                        },
+                        onMenuClick = {},
 
                         onPerfilClick = {
-
                             navController.navigate("perfil")
                         },
 
                         onCasosClick = {
-
-                            navController.navigate("casos")
+                            navController.navigate("CasosTecnico")
                         },
 
                         onConfiguracionClick = {
-
                             navController.navigate("configuracion")
                         },
 
                         onCerrarSesionClick = {
-
-                            navController.navigate("login")
+                            navController.navigate("login") {
+                                popUpTo(0) { inclusive = true }
+                            }
                         }
                     )
                 }
@@ -328,6 +317,15 @@ fun AppNavigation(
                     navController.popBackStack()
 
                 }
+            )
+        }
+
+        composable (route = "CasosUsuario") {
+            CasosUsuarioScreen(
+                onVolverClick = {
+                    navController.popBackStack()
+                },
+                onCasoClick = { }
             )
         }
     }
