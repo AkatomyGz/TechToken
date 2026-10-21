@@ -7,15 +7,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
+
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
@@ -23,15 +24,19 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
 
 @Composable
 fun DashboardUsuarioScreen(
@@ -73,34 +78,47 @@ fun DashboardUsuarioScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Menu,
-                        contentDescription = "Abrir menú"
+                        contentDescription = "Abrir menú",
+                        tint = MaterialTheme.colorScheme.onBackground
                     )
                 }
 
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(
+                    modifier = Modifier.width(8.dp)
+                )
 
                 Text(
                     text = "TechToken",
-                    fontSize = 22.sp
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(
+                modifier = Modifier.height(32.dp)
+            )
 
             // Saludo
             Text(
                 text = "Hola, Juan 👋",
-                fontSize = 28.sp
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(
+                modifier = Modifier.height(8.dp)
+            )
 
             Text(
                 text = "Aquí tienes un resumen de tus casos.",
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(
+                modifier = Modifier.height(28.dp)
+            )
 
             // Tarjeta de casos
             Card(
@@ -117,10 +135,14 @@ fun DashboardUsuarioScreen(
 
                     Text(
                         text = "Mis casos",
-                        fontSize = 20.sp
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(
+                        modifier = Modifier.height(20.dp)
+                    )
 
                     CasoUsuario(
                         asunto = "Problema con mi computador",
@@ -143,9 +165,11 @@ fun DashboardUsuarioScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(
+                modifier = Modifier.height(24.dp)
+            )
 
-            // Botón crear caso
+            // Botón para crear un caso
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -168,21 +192,23 @@ fun DashboardUsuarioScreen(
                     Text(
                         text = "+ Crear nuevo caso",
                         color = MaterialTheme.colorScheme.onPrimary,
-                        fontSize = 16.sp
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
                     )
                 }
             }
         }
 
-        // Menú lateral
+        // Menú lateral compartido con el dashboard técnico
         if (menuAbierto) {
 
+            // Fondo oscurecido al abrir el menú
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
-                        MaterialTheme.colorScheme.background.copy(
-                            alpha = 0.5f
+                        MaterialTheme.colorScheme.scrim.copy(
+                            alpha = 0.45f
                         )
                     )
                     .clickable {
@@ -190,96 +216,32 @@ fun DashboardUsuarioScreen(
                     }
             )
 
-            Card(
-                modifier = Modifier
-                    .width(280.dp)
-                    .fillMaxHeight(),
-                shape = RoundedCornerShape(
-                    topEnd = 20.dp,
-                    bottomEnd = 20.dp
-                ),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            ) {
+            MenuLateral(
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .padding(20.dp)
-                ) {
+                onPerfilClick = {
+                    menuAbierto = false
+                    onPerfilClick()
+                },
 
-                    Text(
-                        text = "TechToken",
-                        fontSize = 24.sp
-                    )
+                onCasosClick = {
+                    menuAbierto = false
+                    onCasosClick()
+                },
 
-                    Spacer(modifier = Modifier.height(32.dp))
+                onConfiguracionClick = {
+                    menuAbierto = false
+                    onConfiguracionClick()
+                },
 
-                    Text(
-                        text = "Inicio",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                menuAbierto = false
-                            }
-                            .padding(vertical = 14.dp)
-                    )
-
-                    Text(
-                        text = "Perfil",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                menuAbierto = false
-                                onPerfilClick()
-                            }
-                            .padding(vertical = 14.dp)
-                    )
-
-                    Text(
-                        text = "Mis casos",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                menuAbierto = false
-                                onCasosClick()
-                            }
-                            .padding(vertical = 14.dp)
-                    )
-
-                    Text(
-                        text = "Configuración",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                menuAbierto = false
-                                onConfiguracionClick()
-                            }
-                            .padding(vertical = 14.dp)
-                    )
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    Divider()
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = "Cerrar sesión",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                menuAbierto = false
-                                onCerrarSesionClick()
-                            }
-                            .padding(vertical = 14.dp)
-                    )
+                onCerrarSesionClick = {
+                    menuAbierto = false
+                    onCerrarSesionClick()
                 }
-            }
+            )
         }
     }
 }
+
 
 @Composable
 private fun CasoUsuario(
@@ -291,16 +253,20 @@ private fun CasoUsuario(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 16.dp),
+
         verticalAlignment = Alignment.CenterVertically
     ) {
 
         Text(
             text = asunto,
             modifier = Modifier.weight(1f),
-            fontSize = 15.sp
+            fontSize = 15.sp,
+            color = MaterialTheme.colorScheme.onSurface
         )
 
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(
+            modifier = Modifier.width(12.dp)
+        )
 
         Text(
             text = estado,

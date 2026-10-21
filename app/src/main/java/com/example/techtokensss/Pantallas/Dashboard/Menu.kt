@@ -18,7 +18,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,8 +35,7 @@ fun MenuLateral(
         modifier = Modifier
             .fillMaxHeight()
             .fillMaxWidth(0.78f)
-            .background(MaterialTheme.colorScheme.background)
-
+            .background(MaterialTheme.colorScheme.surface)
             .padding(24.dp),
 
         verticalArrangement = Arrangement.Top
@@ -45,108 +43,83 @@ fun MenuLateral(
 
         Text(
             text = "TechToken",
-
-            color = MaterialTheme.colorScheme.onBackground,
-
+            color = MaterialTheme.colorScheme.onSurface,
             fontSize = 26.sp,
             fontWeight = FontWeight.Bold
         )
 
-        Spacer(
-            modifier = Modifier.height(8.dp)
-        )
+        Spacer(modifier = Modifier.height(8.dp))
 
         Text(
             text = "Menú principal",
-            color = MaterialTheme.colorScheme.onBackground.copy(
-                alpha = 0.7f
-            ),
-
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 14.sp
         )
 
-        Spacer(
-            modifier = Modifier.height(32.dp)
-        )
+        Spacer(modifier = Modifier.height(32.dp))
 
         Button(
             onClick = onPerfilClick,
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(14.dp),
-
             colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.surface
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
             )
         ) {
-
             Text(
                 text = "👤   Perfil",
-                color = MaterialTheme.colorScheme.onSurface,
-
                 modifier = Modifier.fillMaxWidth()
             )
         }
 
-        Spacer(
-            modifier = Modifier.height(12.dp)
-        )
+        Spacer(modifier = Modifier.height(12.dp))
 
         Button(
             onClick = onCasosClick,
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(14.dp),
-
             colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.surface
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
             )
         ) {
-
             Text(
                 text = "📁   Casos",
-                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.fillMaxWidth()
             )
         }
 
-        Spacer(
-            modifier = Modifier.height(12.dp)
-        )
+        Spacer(modifier = Modifier.height(12.dp))
 
         Button(
             onClick = onConfiguracionClick,
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(14.dp),
-
             colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.surface
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
             )
         ) {
-
             Text(
                 text = "⚙   Configuración",
-                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.fillMaxWidth()
             )
         }
 
-        Spacer(
-            modifier = Modifier.weight(1f)
-        )
+        Spacer(modifier = Modifier.weight(1f))
 
         Button(
             onClick = onCerrarSesionClick,
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(14.dp),
-
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF241827)
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+                contentColor = MaterialTheme.colorScheme.onErrorContainer
             )
         ) {
-
             Text(
                 text = "🚪   Cerrar sesión",
-                color = Color.White,
-
                 modifier = Modifier.fillMaxWidth()
             )
         }
