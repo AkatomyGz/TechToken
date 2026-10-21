@@ -57,4 +57,23 @@ class CasosRepository {
         }
     }
 
+
+    suspend fun obtenerEncargado(idEncargado: String): Result<String?> {
+        return runCatching {
+            val perfiles = supabase
+                .from("perfiles")
+                .select {
+                    filter {
+                        eq("id_perfil", idEncargado)
+                    }
+                }
+                .decodeList<com.example.techtokensss.Datos.Modelos.Perfil>()
+
+            perfiles.firstOrNull()?.let {
+                "${it.nombres} ${it.apellidos}"
+            }
+        }
+    }
+
+
 }

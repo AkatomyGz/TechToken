@@ -330,6 +330,7 @@ fun AppNavigation(
             )
         }
 
+
         composable(route = "DetalleCaso/{idCaso}") { backStackEntry ->
             val idCaso = backStackEntry.arguments?.getString("idCaso") ?: ""
 
@@ -337,9 +338,13 @@ fun AppNavigation(
                 idCaso = idCaso,
                 onVolverClick = {
                     navController.popBackStack()
+                },
+                onHistorialClick = { id ->
+                    navController.navigate("HistorialCaso/$id")
                 }
             )
         }
+
 
     }
 }
