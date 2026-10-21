@@ -41,4 +41,20 @@ class CasosRepository {
                 .decodeList<Categoria>()
         }
     }
+
+
+    suspend fun obtenerCasoPorId(idCaso: String): Result<Caso?> {
+        return runCatching {
+            supabase
+                .from("casos")
+                .select {
+                    filter {
+                        eq("id_caso", idCaso)
+                    }
+                }
+                .decodeList<Caso>()
+                .firstOrNull()
+        }
+    }
+
 }

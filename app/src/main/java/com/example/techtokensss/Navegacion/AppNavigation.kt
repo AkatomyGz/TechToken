@@ -30,7 +30,7 @@ import com.example.techtokensss.Pantallas.Login.LoginScreen
 import com.example.techtokensss.Pantallas.Perfil.UserScreen
 import com.example.techtokensss.Pantallas.RegistroUser.RegistroScreen
 import com.example.techtokensss.Pantallas.RegistroCaso.CrearCasoScreen
-
+import com.example.techtokensss.Pantallas.Casos.DetalleCasoScreen
 
 @Composable
 fun AppNavigation(
@@ -325,8 +325,21 @@ fun AppNavigation(
                 onVolverClick = {
                     navController.popBackStack()
                 },
-                onCasoClick = { }
+                onCasoClick = { idCaso ->
+                    navController.navigate("DetalleCaso/$idCaso") }
             )
         }
+
+        composable(route = "DetalleCaso/{idCaso}") { backStackEntry ->
+            val idCaso = backStackEntry.arguments?.getString("idCaso") ?: ""
+
+            DetalleCasoScreen(
+                idCaso = idCaso,
+                onVolverClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
     }
 }
