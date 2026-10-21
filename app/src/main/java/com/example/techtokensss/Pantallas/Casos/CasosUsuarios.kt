@@ -3,122 +3,89 @@ package com.example.techtokensss.Pantallas.Casos
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-private data class CasoDemo(
-    val id: String,
-    val asunto: String,
-    val descripcion: String,
-    val categoria: String,
-    val estado: String,
-    val fecha: String
-)
-
-private val casosBase = listOf(
-    CasoDemo(
-        "001",
-        "Problema con mi computador",
-        "El equipo se apaga inesperadamente después de unos minutos de uso.",
-        "Hardware",
-        "En proceso",
-        "15 oct 2026"
-    ),
-    CasoDemo(
-        "002",
-        "Error al conectarme al Wi-Fi",
-        "Mi portátil detecta la red, pero no logra conectarse a Internet.",
-        "Conectividad",
-        "Solucionado",
-        "12 oct 2026"
-    ),
-    CasoDemo(
-        "003",
-        "No puedo abrir Microsoft Office",
-        "Al intentar abrir Word aparece un mensaje de error.",
-        "Software",
-        "Registrado",
-        "10 oct 2026"
-    ),
-    CasoDemo(
-        "004",
-        "Problema de acceso a mi cuenta",
-        "No puedo ingresar con mis credenciales habituales.",
-        "Cuenta",
-        "Cerrado",
-        "08 oct 2026"
-    )
-)
-
-// Datos ficticios para probar el desplazamiento de la pantalla.
-private val casosDemo = List(24) { index ->
-    val casoBase = casosBase[index % casosBase.size]
-
-    casoBase.copy(
-        id = "%03d".format(index + 1),
-        asunto = if (index < casosBase.size) {
-            casoBase.asunto
-        } else {
-            "${casoBase.asunto} (${index + 1})"
-        }
-    )
-}
+import com.example.techtokensss.Datos.Modelos.Caso
+import com.example.techtokensss.Datos.Modelos.Categoria
 
 @Composable
 fun CasosUsuarioScreen(
     onVolverClick: () -> Unit,
     onCasoClick: (String) -> Unit
 ) {
-    var busqueda by remember { mutableStateOf("") }
-    var filtroSeleccionado by remember { mutableStateOf("Todos") }
+    val repository = remember { CasosRepository() }
 
-    val casosFiltrados = casosDemo.filter { caso ->
+    var casos by remember { mutableStateOf<List<Caso>>(emptyList()) }
+    var categorias by remember {
+        mutableStateOf<List<Categoria>>(emptyList())
+    }
+    var cargando by remember { mutableStateOf(true) }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    var busqueda by remember { mutableStateOf("") }
+    var filtroSeleccionado by remember {
+        mutableStateOf("Todos")
+    }
+
+    // Cargar casos y categorías al abrir la pantalla.
+    LaunchedEffect(Unit) {
+        cargando = true
+        error = null
+
+        repository.obtenerMisCasos()
+            .onSuccess { resultado ->
+                casos = resultado
+            }
+            .onFailure { excepcion ->
+                error = excepcion.message
+                    ?: "No se pudieron cargar los casos."
+            }
+
+        repository.obtenerCategorias()
+            .onSuccess { resultado ->
+                categorias = resultado
+            }
+            .onFailure { excepcion ->
+                if (error == null) {
+                    error = "No se pudieron cargar las categorías: " +
+                            (excepcion.message ?: "error desconocido")
+                }
+            }
+
+        cargando = false
+    }
+
+    val nombresCategorias = categorias.associate {
+        it.idCategoria to it.nombre
+    }
+
+    val casosFiltrados = casos.filter { caso ->
         val coincideBusqueda =
             caso.asunto.contains(busqueda, ignoreCase = true)
 
         val coincideEstado = when (filtroSeleccionado) {
             "Finalizados" ->
-                caso.estado == "Cerrado" ||
-                        caso.estado == "Solucionado"
+                caso.estado == "cerrado" ||
+                        caso.estado == "solucionado"
 
             "Registrados" ->
-                caso.estado == "Registrado"
+                caso.estado == "registrado"
 
             "En proceso" ->
-                caso.estado == "En proceso"
+                caso.estado == "en_proceso"
 
             else -> true
         }
@@ -126,20 +93,16 @@ fun CasosUsuarioScreen(
         coincideBusqueda && coincideEstado
     }
 
-    // Una sola lista controla el desplazamiento de toda la pantalla.
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(
-            start = 20.dp,
-            end = 20.dp,
-            top = 12.dp,
-            bottom = 28.dp
+            horizontal = 20.dp,
+            vertical = 12.dp
         ),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Cabecera
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -147,22 +110,19 @@ fun CasosUsuarioScreen(
             ) {
                 IconButton(onClick = onVolverClick) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Volver",
-                        tint = MaterialTheme.colorScheme.onBackground
+                        Icons.Default.ArrowBack,
+                        contentDescription = "Volver"
                     )
                 }
 
-                Column(modifier = Modifier.weight(1f)) {
+                Column {
                     Text(
-                        text = "Mis casos",
+                        "Mis casos",
                         fontSize = 25.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
+                        fontWeight = FontWeight.Bold
                     )
-
                     Text(
-                        text = "Consulta tus solicitudes de soporte",
+                        "Consulta tus solicitudes de soporte",
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -170,83 +130,65 @@ fun CasosUsuarioScreen(
             }
         }
 
-        // Resumen general
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                    containerColor =
+                        MaterialTheme.colorScheme.primaryContainer
                 )
             ) {
-                Column(modifier = Modifier.padding(18.dp)) {
+                Column(Modifier.padding(18.dp)) {
+                    Text("Total de casos")
                     Text(
-                        text = "Total de casos",
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-
-                    Text(
-                        text = "${casosDemo.size} solicitudes",
+                        "${casos.size} solicitudes",
                         fontSize = 27.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        fontWeight = FontWeight.Bold
                     )
-
                     Text(
-                        text = "Revisa el estado de tus solicitudes",
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        "Casos registrados en tu cuenta",
+                        fontSize = 13.sp
                     )
                 }
             }
         }
 
-        // Contadores por estado
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 ResumenEstado(
-                    titulo = "Registrados",
-                    cantidad = casosDemo.count {
-                        it.estado == "Registrado"
-                    }.toString(),
-                    modifier = Modifier.weight(1f)
+                    "Registrados",
+                    casos.count { it.estado == "registrado" }.toString(),
+                    Modifier.weight(1f)
                 )
-
                 ResumenEstado(
-                    titulo = "En proceso",
-                    cantidad = casosDemo.count {
-                        it.estado == "En proceso"
-                    }.toString(),
-                    modifier = Modifier.weight(1f)
+                    "En proceso",
+                    casos.count { it.estado == "en_proceso" }.toString(),
+                    Modifier.weight(1f)
                 )
-
                 ResumenEstado(
-                    titulo = "Finalizados",
-                    cantidad = casosDemo.count {
-                        it.estado == "Cerrado" ||
-                                it.estado == "Solucionado"
+                    "Finalizados",
+                    casos.count {
+                        it.estado == "cerrado" ||
+                                it.estado == "solucionado"
                     }.toString(),
-                    modifier = Modifier.weight(1f)
+                    Modifier.weight(1f)
                 )
             }
         }
 
-        // Buscador
         item {
             OutlinedTextField(
                 value = busqueda,
                 onValueChange = { busqueda = it },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                placeholder = {
-                    Text("Buscar por asunto...")
-                },
+                placeholder = { Text("Buscar por asunto...") },
                 leadingIcon = {
                     Icon(
-                        imageVector = Icons.Default.Search,
+                        Icons.Default.Search,
                         contentDescription = "Buscar"
                     )
                 },
@@ -254,7 +196,6 @@ fun CasosUsuarioScreen(
             )
         }
 
-        // Filtros existentes
         item {
             Row(
                 modifier = Modifier
@@ -270,48 +211,56 @@ fun CasosUsuarioScreen(
                 ).forEach { filtro ->
                     FilterChip(
                         selected = filtroSeleccionado == filtro,
-                        onClick = {
-                            filtroSeleccionado = filtro
-                        },
-                        label = {
-                            Text(filtro)
-                        }
+                        onClick = { filtroSeleccionado = filtro },
+                        label = { Text(filtro) }
                     )
                 }
             }
         }
 
-        // Cantidad encontrada
         item {
             Text(
-                text = "${casosFiltrados.size} casos encontrados",
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                "${casosFiltrados.size} casos encontrados",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 13.sp
             )
         }
 
-        // Casos: forman parte de la misma lista desplazable.
-        items(
-            items = casosFiltrados,
-            key = { it.id }
-        ) { caso ->
-            TarjetaCasoUsuario(
-                caso = caso,
-                onClick = {
-                    onCasoClick(caso.id)
-                }
-            )
-        }
-
-        // Mensaje si la búsqueda no encuentra resultados.
-        if (casosFiltrados.isEmpty()) {
+        if (cargando) {
             item {
-                Text(
-                    text = "No se encontraron casos.",
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 24.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+        } else if (error != null) {
+            item {
+                Text(
+                    text = error!!,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        } else if (casosFiltrados.isEmpty()) {
+            item {
+                Text(
+                    "No se encontraron casos.",
+                    modifier = Modifier.padding(vertical = 24.dp)
+                )
+            }
+        } else {
+            items(
+                items = casosFiltrados,
+                key = { it.idCaso }
+            ) { caso ->
+                TarjetaCasoReal(
+                    caso = caso,
+                    categoria = nombresCategorias[caso.idCategoria]
+                        ?: "Categoría",
+                    onClick = { onCasoClick(caso.idCaso) }
                 )
             }
         }
@@ -326,24 +275,22 @@ private fun ResumenEstado(
 ) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
-        )
+        ),
+        shape = RoundedCornerShape(14.dp)
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(10.dp),
             verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             Text(
-                text = cantidad,
+                cantidad,
                 fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                fontWeight = FontWeight.Bold
             )
-
             Text(
-                text = titulo,
+                titulo,
                 fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -352,16 +299,31 @@ private fun ResumenEstado(
 }
 
 @Composable
-private fun TarjetaCasoUsuario(
-    caso: CasoDemo,
+private fun TarjetaCasoReal(
+    caso: Caso,
+    categoria: String,
     onClick: () -> Unit
 ) {
+    val estadoVisible = when (caso.estado) {
+        "registrado" -> "Registrado"
+        "en_proceso" -> "En proceso"
+        "solucionado" -> "Solucionado"
+        "cerrado" -> "Cerrado"
+        else -> caso.estado
+    }
+
     val colorEstado = when (caso.estado) {
-        "Registrado" -> MaterialTheme.colorScheme.primary
-        "En proceso" -> MaterialTheme.colorScheme.tertiary
-        "Solucionado" -> MaterialTheme.colorScheme.secondary
-        "Cerrado" -> MaterialTheme.colorScheme.outline
-        else -> MaterialTheme.colorScheme.primary
+        "registrado" -> MaterialTheme.colorScheme.primaryContainer
+        "en_proceso" -> MaterialTheme.colorScheme.tertiaryContainer
+        "solucionado" -> MaterialTheme.colorScheme.secondaryContainer
+        else -> MaterialTheme.colorScheme.surfaceVariant
+    }
+
+    val colorTextoEstado = when (caso.estado) {
+        "registrado" -> MaterialTheme.colorScheme.onPrimaryContainer
+        "en_proceso" -> MaterialTheme.colorScheme.onTertiaryContainer
+        "solucionado" -> MaterialTheme.colorScheme.onSecondaryContainer
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     Card(
@@ -373,41 +335,29 @@ private fun TarjetaCasoUsuario(
             containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "CASO #${caso.id}",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.weight(1f)
-                )
+        Column(Modifier.padding(16.dp)) {
+            Text(
+                "CASO #${caso.idCaso.take(8)}",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
 
-                Text(
-                    text = caso.fecha,
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(8.dp))
 
             Text(
-                text = caso.asunto,
+                caso.asunto,
                 fontSize = 17.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
+                fontWeight = FontWeight.SemiBold
             )
 
             Spacer(Modifier.height(6.dp))
 
             Text(
-                text = caso.descripcion,
+                caso.descripcion,
                 fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 3
             )
 
             Spacer(Modifier.height(12.dp))
@@ -416,18 +366,24 @@ private fun TarjetaCasoUsuario(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = caso.categoria,
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(1f)
-                )
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        categoria,
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        caso.fechaCreacion.take(10),
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
 
                 Box(
                     modifier = Modifier
                         .background(
-                            color = colorEstado,
-                            shape = RoundedCornerShape(50)
+                            colorEstado,
+                            RoundedCornerShape(50)
                         )
                         .padding(
                             horizontal = 10.dp,
@@ -435,10 +391,10 @@ private fun TarjetaCasoUsuario(
                         )
                 ) {
                     Text(
-                        text = caso.estado,
+                        estadoVisible,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.surface
+                        color = colorTextoEstado
                     )
                 }
             }
