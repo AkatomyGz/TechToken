@@ -27,6 +27,11 @@ import java.util.Locale
 import com.example.techtokensss.Datos.Modelos.Caso
 import com.example.techtokensss.Datos.Modelos.Categoria
 import com.example.techtokensss.Pantallas.CasosTecnico.CasosTecnicoRepository
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 @Composable
 fun DetalleCasoScreen(
@@ -52,6 +57,10 @@ fun DetalleCasoScreen(
 
     var categoriaMenuAbierto by remember { mutableStateOf(false) }
     var estadoMenuAbierto by remember { mutableStateOf(false) }
+
+    var mostrarHistorialProximamente by remember {
+        mutableStateOf(false)
+    }
 
     val estadosDisponibles = listOf(
         "registrado",
@@ -382,7 +391,7 @@ fun DetalleCasoScreen(
 
                 OutlinedButton(
                     onClick = {
-                        onHistorialClick(actual.idCaso)
+                        mostrarHistorialProximamente = true
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -400,7 +409,38 @@ fun DetalleCasoScreen(
             }
         }
     }
+
+    if (mostrarHistorialProximamente) {
+        AlertDialog(
+            onDismissRequest = {
+                mostrarHistorialProximamente = false
+            },
+            title = {
+                Text(text = "Historial")
+            },
+            text = {
+                Text(
+                    text = "¡Esta funcionalidad estará disponible próximamente!"
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        mostrarHistorialProximamente = false
+                    }
+                ) {
+                    Text(text = "Entendido")
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+
 }
+
+
 
 @Composable
 private fun DatoCaso(
@@ -451,5 +491,7 @@ private fun formatearEstado(estado: String): String {
             .replace("_", " ")
             .replaceFirstChar { it.uppercase() }
     }
+
+
 }
 
