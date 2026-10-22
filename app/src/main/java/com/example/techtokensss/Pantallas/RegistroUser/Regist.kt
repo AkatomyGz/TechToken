@@ -1,39 +1,19 @@
 package com.example.techtokensss.Pantallas.RegistroUser
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import com.example.techtokensss.ui.components.*
 import kotlinx.coroutines.launch
 
 @Composable
@@ -41,70 +21,31 @@ fun RegistroScreen(
     onRegistroClick: () -> Unit,
     onVolverClick: () -> Unit
 ) {
-    var nombre by remember {
-        mutableStateOf("")
-    }
+    // ------------------------------------------------------------------
+    // LÓGICA Y VALIDACIONES (sin cambios)
+    // ------------------------------------------------------------------
+    var nombre by remember { mutableStateOf("") }
+    var apellido by remember { mutableStateOf("") }
+    var correo by remember { mutableStateOf("") }
+    var numeroContacto by remember { mutableStateOf("") }
+    var contraseña by remember { mutableStateOf("") }
+    var confirmarContraseña by remember { mutableStateOf("") }
 
-    var apellido by remember {
-        mutableStateOf("")
-    }
+    var errorNombre by remember { mutableStateOf("") }
+    var errorApellido by remember { mutableStateOf("") }
+    var errorCorreo by remember { mutableStateOf("") }
+    var errorNumeroContacto by remember { mutableStateOf("") }
+    var errorContraseña by remember { mutableStateOf("") }
+    var errorConfirmarContraseña by remember { mutableStateOf("") }
+    var errorRegistro by remember { mutableStateOf("") }
 
-    var correo by remember {
-        mutableStateOf("")
-    }
-
-    var numeroContacto by remember {
-        mutableStateOf("")
-    }
-
-    var contraseña by remember {
-        mutableStateOf("")
-    }
-
-    var confirmarContraseña by remember {
-        mutableStateOf("")
-    }
-
-    var errorNombre by remember {
-        mutableStateOf("")
-    }
-
-    var errorApellido by remember {
-        mutableStateOf("")
-    }
-
-    var errorCorreo by remember {
-        mutableStateOf("")
-    }
-
-    var errorNumeroContacto by remember {
-        mutableStateOf("")
-    }
-
-    var errorContraseña by remember {
-        mutableStateOf("")
-    }
-
-    var errorConfirmarContraseña by remember {
-        mutableStateOf("")
-    }
-
-    var errorRegistro by remember {
-        mutableStateOf("")
-    }
-
-    var cargando by remember {
-        mutableStateOf(false)
-    }
+    var cargando by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
-
 
     val repository = remember {
         RegistroRepository()
     }
-
-    val colorBorde = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
 
     fun validarFormulario(): Boolean {
 
@@ -172,300 +113,205 @@ fun RegistroScreen(
         return formularioValido
     }
 
+    // ------------------------------------------------------------------
+    // INTERFAZ
+    // ------------------------------------------------------------------
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .screenInsets()
             .verticalScroll(rememberScrollState())
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        BrandHeader(subtitulo = "Crea tu cuenta")
 
-        Text(
-            text = "TechToken",
-            color = MaterialTheme.colorScheme.onBackground,
-            fontSize = 34.sp,
-            fontWeight = FontWeight.Bold
-        )
+        Spacer(Modifier.height(28.dp))
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "Crea tu cuenta",
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-            fontSize = 16.sp
-        )
-
-        Spacer(modifier = Modifier.height(28.dp))
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(28.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            )
-        ) {
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-
+        AuthCard {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = "Registrarse",
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                OutlinedTextField(
-                    value = nombre,
-                    onValueChange = {
-                        nombre = it
-                        errorNombre = ""
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = {
-                        Text("Nombre")
-                    },
-                    singleLine = true,
-                    isError = errorNombre.isNotEmpty(),
-                    supportingText = {
-                        if (errorNombre.isNotEmpty()) {
-                            Text(errorNombre)
-                        }
-                    },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = coloresCampos(colorBorde)
+                Text(
+                    text = "Completa tus datos para continuar",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedTextField(
-                    value = apellido,
-                    onValueChange = {
-                        apellido = it
-                        errorApellido = ""
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = {
-                        Text("Apellido")
-                    },
-                    singleLine = true,
-                    isError = errorApellido.isNotEmpty(),
-                    supportingText = {
-                        if (errorApellido.isNotEmpty()) {
-                            Text(errorApellido)
-                        }
-                    },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = coloresCampos(colorBorde)
+            TechTicketTextField(
+                value = nombre,
+                onValueChange = {
+                    nombre = it
+                    errorNombre = ""
+                },
+                label = "Nombre",
+                errorText = errorNombre.takeIf { it.isNotEmpty() },
+                enabled = !cargando,
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Words,
+                    imeAction = ImeAction.Next
                 )
+            )
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedTextField(
-                    value = correo,
-                    onValueChange = {
-                        correo = it
-                        errorCorreo = ""
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = {
-                        Text("Correo electrónico")
-                    },
-                    singleLine = true,
-                    isError = errorCorreo.isNotEmpty(),
-                    supportingText = {
-                        if (errorCorreo.isNotEmpty()) {
-                            Text(errorCorreo)
-                        }
-                    },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = coloresCampos(colorBorde)
+            TechTicketTextField(
+                value = apellido,
+                onValueChange = {
+                    apellido = it
+                    errorApellido = ""
+                },
+                label = "Apellido",
+                errorText = errorApellido.takeIf { it.isNotEmpty() },
+                enabled = !cargando,
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Words,
+                    imeAction = ImeAction.Next
                 )
+            )
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedTextField(
-                    value = numeroContacto,
-                    onValueChange = {
-                        if (it.all { caracter -> caracter.isDigit() }) {
-                            numeroContacto = it
-                            errorNumeroContacto = ""
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = {
-                        Text("Número de contacto")
-                    },
-                    singleLine = true,
-                    isError = errorNumeroContacto.isNotEmpty(),
-                    supportingText = {
-                        if (errorNumeroContacto.isNotEmpty()) {
-                            Text(errorNumeroContacto)
-                        }
-                    },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Phone
-                    ),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = coloresCampos(colorBorde)
+            TechTicketTextField(
+                value = correo,
+                onValueChange = {
+                    correo = it
+                    errorCorreo = ""
+                },
+                label = "Correo electrónico",
+                errorText = errorCorreo.takeIf { it.isNotEmpty() },
+                enabled = !cargando,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Next
                 )
+            )
 
-                Spacer(modifier = Modifier.height(16.dp))
+            TechTicketTextField(
+                value = numeroContacto,
+                onValueChange = {
+                    if (it.all { caracter -> caracter.isDigit() }) {
+                        numeroContacto = it
+                        errorNumeroContacto = ""
+                    }
+                },
+                label = "Número de contacto",
+                errorText = errorNumeroContacto.takeIf { it.isNotEmpty() },
+                enabled = !cargando,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Phone,
+                    imeAction = ImeAction.Next
+                )
+            )
 
-                OutlinedTextField(
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                TechTicketPasswordField(
                     value = contraseña,
                     onValueChange = {
                         contraseña = it
                         errorContraseña = ""
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = {
-                        Text("Contraseña")
-                    },
-                    singleLine = true,
-                    isError = errorContraseña.isNotEmpty(),
-                    supportingText = {
-                        if (errorContraseña.isNotEmpty()) {
-                            Text(errorContraseña)
-                        }
-                    },
-                    visualTransformation = PasswordVisualTransformation(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = coloresCampos(colorBorde)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedTextField(
-                    value = confirmarContraseña,
-                    onValueChange = {
-                        confirmarContraseña = it
-                        errorConfirmarContraseña = ""
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = {
-                        Text("Confirmar contraseña")
-                    },
-                    singleLine = true,
-                    isError = errorConfirmarContraseña.isNotEmpty(),
-                    supportingText = {
-                        if (errorConfirmarContraseña.isNotEmpty()) {
-                            Text(errorConfirmarContraseña)
-                        }
-                    },
-                    visualTransformation = PasswordVisualTransformation(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = coloresCampos(colorBorde)
-                )
-
-                if (errorRegistro.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = errorRegistro,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(28.dp))
-
-                Button(
-                    onClick = {
-
-                        if (!cargando && validarFormulario()) {
-
-                            cargando = true
-                            errorRegistro = ""
-
-
-                            scope.launch {
-
-
-                                val resultado = repository.registrar(
-                                    nombres = nombre,
-                                    apellidos = apellido,
-                                    correo = correo,
-                                    numeroContacto = numeroContacto,
-                                    contraseña = contraseña
-                                )
-
-                                cargando = false
-
-                                resultado.onSuccess {
-                                    onRegistroClick()
-                                }
-
-                                resultado.onFailure { error ->
-                                    errorRegistro =
-                                        error.message
-                                            ?: "No se pudo crear la cuenta"
-                                }
-                            }
-                        }
-                    },
-                    enabled = !cargando,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-
-                    Text(
-                        text = if (cargando) {
-                            "Creando cuenta..."
-                        } else {
-                            "Crear cuenta"
-                        },
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                TextButton(
-                    onClick = onVolverClick,
+                    label = "Contraseña",
+                    errorText = errorContraseña.takeIf { it.isNotEmpty() },
                     enabled = !cargando
-                ) {
+                )
+
+                if (errorContraseña.isEmpty()) {
                     Text(
-                        text = "Ya tengo una cuenta",
-                        color = MaterialTheme.colorScheme.primary
+                        text = "Mínimo 8 caracteres, con mayúscula, minúscula, número y carácter especial.",
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
+
+            TechTicketPasswordField(
+                value = confirmarContraseña,
+                onValueChange = {
+                    confirmarContraseña = it
+                    errorConfirmarContraseña = ""
+                },
+                label = "Confirmar contraseña",
+                errorText = errorConfirmarContraseña.takeIf { it.isNotEmpty() },
+                enabled = !cargando
+            )
+
+            if (errorRegistro.isNotEmpty()) {
+                FeedbackBanner(mensaje = errorRegistro, tipo = TipoMensaje.Error)
+            }
+
+            Button(
+                onClick = {
+
+                    if (!cargando && validarFormulario()) {
+
+                        cargando = true
+                        errorRegistro = ""
+
+
+                        scope.launch {
+
+                            val resultado = repository.registrar(
+                                nombres = nombre,
+                                apellidos = apellido,
+                                correo = correo,
+                                numeroContacto = numeroContacto,
+                                contraseña = contraseña
+                            )
+
+                            cargando = false
+
+                            resultado.onSuccess {
+                                onRegistroClick()
+                            }
+
+                            resultado.onFailure { error ->
+                                errorRegistro =
+                                    error.message
+                                        ?: "No se pudo crear la cuenta"
+                            }
+                        }
+                    }
+                },
+                enabled = !cargando,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 52.dp),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                if (cargando) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = LocalContentColor.current
+                    )
+                    Spacer(Modifier.width(8.dp))
+                }
+
+                Text(
+                    text = if (cargando) {
+                        "Creando cuenta..."
+                    } else {
+                        "Crear cuenta"
+                    },
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+
+            TextButton(
+                onClick = onVolverClick,
+                enabled = !cargando,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            ) {
+                Text("Ya tengo una cuenta")
+            }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(Modifier.height(24.dp))
 
-        Text(
-            text = "TechToken • Tu tecnología, bajo control",
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
-            fontSize = 12.sp
-        )
+        AuthFooter()
     }
 }
-
-@Composable
-private fun coloresCampos(
-    colorBorde: androidx.compose.ui.graphics.Color
-) = OutlinedTextFieldDefaults.colors(
-    focusedTextColor = MaterialTheme.colorScheme.onSurface,
-    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-    focusedBorderColor = MaterialTheme.colorScheme.primary,
-    unfocusedBorderColor = colorBorde,
-    focusedLabelColor = MaterialTheme.colorScheme.primary,
-    unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-    cursorColor = MaterialTheme.colorScheme.primary
-)

@@ -1,40 +1,23 @@
 package com.example.techtokensss.Pantallas.Dashboard
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.example.techtokensss.Datos.Modelos.Caso
 import com.example.techtokensss.Pantallas.Casos.CasosRepository
+import com.example.techtokensss.ui.components.*
+import com.example.techtokensss.ui.theme.APP_NAME
 
 @Composable
 fun DashboardUsuarioScreen(
@@ -45,10 +28,13 @@ fun DashboardUsuarioScreen(
     onCerrarSesionClick: () -> Unit,
     onCrearCasoClick: () -> Unit
 ) {
+    // ------------------------------------------------------------------
+    // LÓGICA (sin cambios)
+    // ------------------------------------------------------------------
     var menuAbierto by remember { mutableStateOf(false) }
 
     var casos by remember {
-        mutableStateOf(emptyList<com.example.techtokensss.Datos.Modelos.Caso>())
+        mutableStateOf(emptyList<Caso>())
     }
 
     var cargando by remember { mutableStateOf(true) }
@@ -81,6 +67,9 @@ fun DashboardUsuarioScreen(
         cargando = false
     }
 
+    // ------------------------------------------------------------------
+    // INTERFAZ
+    // ------------------------------------------------------------------
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -89,100 +78,127 @@ fun DashboardUsuarioScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(20.dp)
+                .screenInsets()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // Barra superior
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                    onClick = {
-                        menuAbierto = true
-                        onMenuClick()
+            TechTicketTopBar(
+                titulo = APP_NAME,
+                navigationIcon = {
+                    IconButton(
+                        onClick = {
+                            menuAbierto = true
+                            onMenuClick()
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Menu,
+                            contentDescription = "Abrir menú"
+                        )
                     }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Menu,
-                        contentDescription = "Abrir menú",
-                        tint = MaterialTheme.colorScheme.onBackground
-                    )
+                },
+                actions = {
+                    IconButton(onClick = onPerfilClick) {
+                        Icon(
+                            imageVector = Icons.Outlined.AccountCircle,
+                            contentDescription = "Perfil"
+                        )
+                    }
                 }
+            )
 
-                Spacer(modifier = Modifier.width(8.dp))
+            // Saludo
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = "Hola, $nombreUsuario",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
 
                 Text(
-                    text = "TechToken",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
+                    text = "Aquí tienes un resumen de tus casos.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            // Acción principal
+            Button(
+                onClick = onCrearCasoClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 56.dp),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = null
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "Crear nuevo caso",
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
 
-            // Saludo
-            Text(
-                text = "Hola, $nombreUsuario ",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Aquí tienes un resumen de tus casos.",
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(28.dp))
-
-            // Resumen de los últimos tres casos
+            // Últimos casos
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = MaterialTheme.shapes.large,
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                ),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
             ) {
                 Column(
-                    modifier = Modifier.padding(20.dp)
-                ) {
-                    Text(
-                        text = "Mis casos",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                    modifier = Modifier.padding(
+                        start = 20.dp,
+                        end = 12.dp,
+                        top = 12.dp,
+                        bottom = 12.dp
                     )
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Mis casos",
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                        TextButton(onClick = onCasosClick) {
+                            Text("Ver todos")
+                        }
+                    }
 
                     when {
                         cargando -> {
-                            Box(
+                            LoadingState(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 20.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator()
-                            }
+                                    .padding(vertical = 24.dp)
+                            )
                         }
 
                         errorCarga != null -> {
-                            Text(
-                                text = errorCarga!!,
-                                color = MaterialTheme.colorScheme.error,
-                                fontSize = 14.sp
+                            FeedbackBanner(
+                                mensaje = errorCarga.orEmpty(),
+                                tipo = TipoMensaje.Error,
+                                modifier = Modifier
+                                    .padding(top = 8.dp, end = 8.dp, bottom = 8.dp)
                             )
                         }
 
                         casos.isEmpty() -> {
-                            Text(
-                                text = "Aún no tienes casos registrados.",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize = 14.sp
+                            EmptyState(
+                                titulo = "Aún no tienes casos registrados.",
+                                descripcion = "Crea tu primer caso para recibir soporte.",
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
 
@@ -190,80 +206,43 @@ fun DashboardUsuarioScreen(
                             casos.forEachIndexed { index, caso ->
                                 CasoUsuario(
                                     asunto = caso.asunto,
-                                    estado = formatearEstado(caso.estado)
+                                    estado = caso.estado
                                 )
 
                                 if (index < casos.lastIndex) {
-                                    Divider()
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(end = 8.dp),
+                                        color = MaterialTheme.colorScheme.outlineVariant
+                                    )
                                 }
                             }
                         }
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Botón para crear un caso
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        onCrearCasoClick()
-                    },
-                shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "+ Crear nuevo caso",
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            }
         }
 
         // Menú lateral
-        if (menuAbierto) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        MaterialTheme.colorScheme.scrim.copy(alpha = 0.45f)
-                    )
-                    .clickable {
-                        menuAbierto = false
-                    }
-            )
-
-            MenuLateral(
-                onPerfilClick = {
-                    menuAbierto = false
-                    onPerfilClick()
-                },
-                onCasosClick = {
-                    menuAbierto = false
-                    onCasosClick()
-                },
-                onConfiguracionClick = {
-                    menuAbierto = false
-                    onConfiguracionClick()
-                },
-                onCerrarSesionClick = {
-                    menuAbierto = false
-                    onCerrarSesionClick()
-                }
-            )
-        }
+        MenuLateralOverlay(
+            visible = menuAbierto,
+            onDismiss = { menuAbierto = false },
+            onPerfilClick = {
+                menuAbierto = false
+                onPerfilClick()
+            },
+            onCasosClick = {
+                menuAbierto = false
+                onCasosClick()
+            },
+            onConfiguracionClick = {
+                menuAbierto = false
+                onConfiguracionClick()
+            },
+            onCerrarSesionClick = {
+                menuAbierto = false
+                onCerrarSesionClick()
+            }
+        )
     }
 }
 
@@ -275,32 +254,20 @@ private fun CasoUsuario(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp),
+            .padding(vertical = 14.dp)
+            .padding(end = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = asunto,
             modifier = Modifier.weight(1f),
-            fontSize = 15.sp,
-            color = MaterialTheme.colorScheme.onSurface
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 2
         )
 
         Spacer(modifier = Modifier.width(12.dp))
 
-        Text(
-            text = estado,
-            fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.primary
-        )
-    }
-}
-
-private fun formatearEstado(estado: String): String {
-    return when (estado) {
-        "registrado" -> "Registrado"
-        "en_proceso" -> "En proceso"
-        "solucionado" -> "Solucionado"
-        "cerrado" -> "Cerrado"
-        else -> estado
+        StatusChip(estado = estado)
     }
 }

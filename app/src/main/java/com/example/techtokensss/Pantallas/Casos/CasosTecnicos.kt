@@ -1,22 +1,26 @@
-
 package com.example.techtokensss.Pantallas.CasosTecnico
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Inbox
+import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.techtokensss.Datos.Modelos.Caso
 import com.example.techtokensss.Datos.Modelos.Categoria
 import com.example.techtokensss.Pantallas.Casos.CasosRepository
+import com.example.techtokensss.ui.components.*
 import kotlinx.coroutines.launch
 
 
@@ -30,6 +34,9 @@ fun CasosTecnicoScreen(
     onVolverClick: () -> Unit,
     onCasoClick: (String) -> Unit
 ) {
+    // ------------------------------------------------------------------
+    // LÓGICA (sin cambios respecto a la versión anterior)
+    // ------------------------------------------------------------------
     val scope = rememberCoroutineScope()
     val repository = remember { CasosTecnicoRepository() }
     val casosRepository = remember { CasosRepository() }
@@ -87,34 +94,32 @@ fun CasosTecnicoScreen(
                 caso.idCaso.contains(busqueda, ignoreCase = true)
     }
 
+    // ------------------------------------------------------------------
+    // INTERFAZ
+    // ------------------------------------------------------------------
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF121318))
-            .padding(20.dp),
+            .background(MaterialTheme.colorScheme.background)
+            .screenInsets()
+            .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Casos de soporte",
-                modifier = Modifier.weight(1f),
-                color = Color.White,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-
-            TextButton(onClick = onVolverClick) {
-                Text("Volver", color = Color.White)
+        TechTicketTopBar(
+            titulo = "Casos de soporte",
+            subtitulo = "Gestiona tus casos y reclama nuevas solicitudes.",
+            onVolverClick = onVolverClick,
+            actions = {
+                IconButton(
+                    onClick = { cargarCasos() },
+                    enabled = !cargando
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Refresh,
+                        contentDescription = "Actualizar lista"
+                    )
+                }
             }
-        }
-
-        Text(
-            text = "Gestiona tus casos y reclama nuevas solicitudes.",
-            color = Color.LightGray,
-            style = MaterialTheme.typography.bodyMedium
         )
 
         Row(
@@ -129,7 +134,13 @@ fun CasosTecnicoScreen(
                     error = null
                     mensaje = null
                 },
-                label = { Text("Mis casos (${misCasos.size})") },
+                label = {
+                    Text(
+                        text = "Mis casos (${misCasos.size})",
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center
+                    )
+                },
                 modifier = Modifier.weight(1f)
             )
 
@@ -141,226 +152,223 @@ fun CasosTecnicoScreen(
                     error = null
                     mensaje = null
                 },
-                label = { Text("Bandeja (${bandeja.size})") },
+                label = {
+                    Text(
+                        text = "Bandeja (${bandeja.size})",
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center
+                    )
+                },
                 modifier = Modifier.weight(1f)
             )
         }
 
-        OutlinedTextField(
+        TechTicketTextField(
             value = busqueda,
             onValueChange = { busqueda = it },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            label = { Text("Buscar caso") },
-            placeholder = { Text("Asunto, descripción o ID") },
-            shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                focusedBorderColor = Color(0xFF8AB4F8),
-                unfocusedBorderColor = Color.Gray,
-                focusedLabelColor = Color(0xFF8AB4F8),
-                unfocusedLabelColor = Color.LightGray,
-                cursorColor = Color.White
-            )
+            label = "Buscar caso",
+            placeholder = "Asunto, descripción o ID",
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Filled.Search,
+                    contentDescription = null
+                )
+            },
+            trailingIcon = if (busqueda.isNotEmpty()) {
+                {
+                    IconButton(onClick = { busqueda = "" }) {
+                        Icon(
+                            imageVector = Icons.Filled.Close,
+                            contentDescription = "Limpiar búsqueda"
+                        )
+                    }
+                }
+            } else {
+                null
+            }
         )
 
-        if (seccion == SeccionCasosTecnico.BANDEJA) {
-            Text(
-                text = "Casos disponibles para reclamar",
-                color = Color(0xFF8AB4F8),
-                fontWeight = FontWeight.SemiBold
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            SectionHeader(
+                titulo = if (seccion == SeccionCasosTecnico.BANDEJA) {
+                    "Casos disponibles para reclamar"
+                } else {
+                    "Casos asignados a ti"
+                },
+                modifier = Modifier.weight(1f)
             )
-        } else {
-            Text(
-                text = "Casos asignados a ti",
-                color = Color(0xFF8AB4F8),
-                fontWeight = FontWeight.SemiBold
-            )
-        }
 
-        if (cargando) {
-            Box(
-                modifier = Modifier.fillMaxWidth().weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = Color.White)
-            }
-        } else if (error != null && listaActual.isEmpty()) {
-            Column(
-                modifier = Modifier.fillMaxWidth().weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(error.orEmpty(), color = Color(0xFFFF8A80))
-                Button(onClick = { cargarCasos() }) {
-                    Text("Reintentar")
-                }
-            }
-        } else if (casosFiltrados.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxWidth().weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
+            if (!cargando) {
                 Text(
-                    text = when (seccion) {
-                        SeccionCasosTecnico.MIS_CASOS ->
-                            "Todavía no tienes casos asignados."
-                        SeccionCasosTecnico.BANDEJA ->
-                            "No hay casos disponibles para reclamar."
+                    text = if (casosFiltrados.size == 1) {
+                        "1 caso"
+                    } else {
+                        "${casosFiltrados.size} casos"
                     },
-                    color = Color.LightGray
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(casosFiltrados, key = { it.idCaso }) { caso ->
-                    val categoria = categorias
-                        .find { it.idCategoria == caso.idCategoria }
-                        ?.nombre ?: "Sin categoría"
-
-                    TarjetaCasoTecnico(
-                        caso = caso,
-                        nombreCategoria = categoria,
-                        mostrarBotonReclamar =
-                            seccion == SeccionCasosTecnico.BANDEJA,
-                        reclamando = casoReclamando == caso.idCaso,
-                        onClick = {
-                            if (seccion == SeccionCasosTecnico.MIS_CASOS) {
-                                onCasoClick(caso.idCaso)
-                            }
-                        },
-                        onReclamarClick = {
-                            scope.launch {
-                                casoReclamando = caso.idCaso
-                                error = null
-                                mensaje = null
-
-                                repository.reclamarCaso(caso.idCaso)
-                                    .onSuccess {
-                                        mensaje = "Caso reclamado correctamente."
-                                        cargarCasos()
-                                    }
-                                    .onFailure {
-                                        error = it.message
-                                            ?: "No se pudo reclamar el caso."
-                                    }
-
-                                casoReclamando = null
-                            }
-                        }
-                    )
-                }
-            }
         }
 
-        if (mensaje != null) {
-            Text(mensaje.orEmpty(), color = Color(0xFF81C995))
+        mensaje?.let {
+            FeedbackBanner(mensaje = it, tipo = TipoMensaje.Exito)
         }
 
         if (error != null && listaActual.isNotEmpty()) {
-            Text(error.orEmpty(), color = Color(0xFFFF8A80))
+            FeedbackBanner(mensaje = error.orEmpty(), tipo = TipoMensaje.Error)
         }
 
-        OutlinedButton(
-            onClick = { cargarCasos() },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Actualizar lista")
+        when {
+            cargando -> {
+                LoadingState(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    mensaje = "Cargando casos..."
+                )
+            }
+
+            error != null && listaActual.isEmpty() -> {
+                ErrorState(
+                    mensaje = error.orEmpty(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    onReintentar = { cargarCasos() }
+                )
+            }
+
+            casosFiltrados.isEmpty() -> {
+                if (busqueda.isNotBlank()) {
+                    EmptyState(
+                        titulo = "No se encontraron casos",
+                        descripcion = "Prueba con otro asunto, descripción o ID.",
+                        icono = Icons.Outlined.SearchOff,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    )
+                } else {
+                    EmptyState(
+                        titulo = when (seccion) {
+                            SeccionCasosTecnico.MIS_CASOS ->
+                                "Todavía no tienes casos asignados."
+                            SeccionCasosTecnico.BANDEJA ->
+                                "No hay casos disponibles para reclamar."
+                        },
+                        icono = Icons.Outlined.Inbox,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    )
+                }
+            }
+
+            else -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentPadding = PaddingValues(bottom = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(casosFiltrados, key = { it.idCaso }) { caso ->
+                        val nombreCategoria = categorias
+                            .find { it.idCategoria == caso.idCategoria }
+                            ?.nombre ?: "Sin categoría"
+
+                        if (seccion == SeccionCasosTecnico.BANDEJA) {
+                            // Los casos de la bandeja no abren detalle: solo se reclaman.
+                            CaseCard(
+                                caso = caso,
+                                nombreCategoria = nombreCategoria,
+                                accion = {
+                                    BotonReclamar(
+                                        reclamando = casoReclamando == caso.idCaso,
+                                        onClick = {
+                                            scope.launch {
+                                                casoReclamando = caso.idCaso
+                                                error = null
+                                                mensaje = null
+
+                                                repository.reclamarCaso(caso.idCaso)
+                                                    .onSuccess {
+                                                        mensaje = "Caso reclamado correctamente."
+                                                        cargarCasos()
+                                                    }
+                                                    .onFailure {
+                                                        error = it.message
+                                                            ?: "No se pudo reclamar el caso."
+                                                    }
+
+                                                casoReclamando = null
+                                            }
+                                        }
+                                    )
+                                }
+                            )
+                        } else {
+                            CaseCard(
+                                caso = caso,
+                                nombreCategoria = nombreCategoria,
+                                onClick = { onCasoClick(caso.idCaso) },
+                                accion = { IndicadorVerDetalle() }
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun TarjetaCasoTecnico(
-    caso: Caso,
-    nombreCategoria: String,
-    mostrarBotonReclamar: Boolean,
+private fun BotonReclamar(
     reclamando: Boolean,
-    onClick: () -> Unit,
-    onReclamarClick: () -> Unit
+    onClick: () -> Unit
 ) {
-    ElevatedCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(
-                if (!mostrarBotonReclamar) {
-                    Modifier.clickable(onClick = onClick)
-                } else {
-                    Modifier
-                }
-            ),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = Color(0xFF202127),
-            contentColor = Color.White
-        )
+    Button(
+        onClick = onClick,
+        enabled = !reclamando,
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Text(
-                text = caso.asunto,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+        if (reclamando) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(18.dp),
+                strokeWidth = 2.dp,
+                color = LocalContentColor.current
             )
-
-            Text(
-                text = caso.descripcion,
-                color = Color(0xFFD0D0D5),
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 3
-            )
-
-            HorizontalDivider(color = Color(0xFF414149))
-
-            Text(
-                text = "Categoría: $nombreCategoria",
-                color = Color(0xFFB8CFFF),
-                style = MaterialTheme.typography.bodySmall
-            )
-
-            Text(
-                text = "Estado: ${caso.estado}",
-                color = Color(0xFFB8CFFF),
-                style = MaterialTheme.typography.bodySmall
-            )
-
-            Text(
-                text = "Fecha: ${caso.fechaCreacion}",
-                color = Color.LightGray,
-                style = MaterialTheme.typography.bodySmall
-            )
-
-            if (mostrarBotonReclamar) {
-                Button(
-                    onClick = onReclamarClick,
-                    enabled = !reclamando,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    if (reclamando) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            strokeWidth = 2.dp
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text("Reclamando...")
-                    } else {
-                        Text("Reclamar caso")
-                    }
-                }
-            } else {
-                Text(
-                    text = "Toca para ver el detalle",
-                    color = Color.LightGray,
-                    style = MaterialTheme.typography.labelSmall
-                )
-            }
+            Spacer(Modifier.width(8.dp))
+            Text("Reclamando...")
+        } else {
+            Text("Reclamar caso")
         }
+    }
+}
+
+@Composable
+private fun IndicadorVerDetalle() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.End,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "Ver detalle",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(Modifier.width(4.dp))
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(16.dp)
+        )
     }
 }
