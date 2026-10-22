@@ -13,30 +13,28 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
-
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
+import com.example.techtokensss.Pantallas.Casos.CasosRepository
 
 @Composable
 fun DashboardUsuarioScreen(
@@ -47,9 +45,40 @@ fun DashboardUsuarioScreen(
     onCerrarSesionClick: () -> Unit,
     onCrearCasoClick: () -> Unit
 ) {
+    var menuAbierto by remember { mutableStateOf(false) }
 
-    var menuAbierto by remember {
-        mutableStateOf(false)
+    var casos by remember {
+        mutableStateOf(emptyList<com.example.techtokensss.Datos.Modelos.Caso>())
+    }
+
+    var cargando by remember { mutableStateOf(true) }
+    var errorCarga by remember { mutableStateOf<String?>(null) }
+
+    val repository = remember { CasosRepository() }
+
+    var nombreUsuario by remember {
+        mutableStateOf("Usuario")
+    }
+
+    LaunchedEffect(Unit) {
+        cargando = true
+        errorCarga = null
+
+        repository.obtenerUltimosCasos()
+            .onSuccess { resultado ->
+                casos = resultado
+            }
+            .onFailure { error ->
+                errorCarga = error.message
+                    ?: "No fue posible cargar tus casos."
+            }
+
+        repository.obtenerNombreUsuario()
+            .onSuccess { nombre ->
+                nombreUsuario = nombre
+            }
+
+        cargando = false
     }
 
     Box(
@@ -57,19 +86,16 @@ fun DashboardUsuarioScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(20.dp)
         ) {
-
             // Barra superior
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
                 IconButton(
                     onClick = {
                         menuAbierto = true
@@ -83,9 +109,7 @@ fun DashboardUsuarioScreen(
                     )
                 }
 
-                Spacer(
-                    modifier = Modifier.width(8.dp)
-                )
+                Spacer(modifier = Modifier.width(8.dp))
 
                 Text(
                     text = "TechToken",
@@ -95,32 +119,26 @@ fun DashboardUsuarioScreen(
                 )
             }
 
-            Spacer(
-                modifier = Modifier.height(32.dp)
-            )
+            Spacer(modifier = Modifier.height(32.dp))
 
             // Saludo
             Text(
-                text = "Hola, Juan 👋",
+                text = "Hola, $nombreUsuario ",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
 
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = "Aquí tienes un resumen de tus casos.",
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(
-                modifier = Modifier.height(28.dp)
-            )
+            Spacer(modifier = Modifier.height(28.dp))
 
-            // Tarjeta de casos
+            // Resumen de los últimos tres casos
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -128,11 +146,9 @@ fun DashboardUsuarioScreen(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
             ) {
-
                 Column(
                     modifier = Modifier.padding(20.dp)
                 ) {
-
                     Text(
                         text = "Mis casos",
                         fontSize = 20.sp,
@@ -140,34 +156,53 @@ fun DashboardUsuarioScreen(
                         color = MaterialTheme.colorScheme.onSurface
                     )
 
-                    Spacer(
-                        modifier = Modifier.height(20.dp)
-                    )
+                    Spacer(modifier = Modifier.height(20.dp))
 
-                    CasoUsuario(
-                        asunto = "Problema con mi computador",
-                        estado = "En proceso"
-                    )
+                    when {
+                        cargando -> {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 20.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
 
-                    Divider()
+                        errorCarga != null -> {
+                            Text(
+                                text = errorCarga!!,
+                                color = MaterialTheme.colorScheme.error,
+                                fontSize = 14.sp
+                            )
+                        }
 
-                    CasoUsuario(
-                        asunto = "No puedo conectarme al WiFi",
-                        estado = "Solucionado"
-                    )
+                        casos.isEmpty() -> {
+                            Text(
+                                text = "Aún no tienes casos registrados.",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 14.sp
+                            )
+                        }
 
-                    Divider()
+                        else -> {
+                            casos.forEachIndexed { index, caso ->
+                                CasoUsuario(
+                                    asunto = caso.asunto,
+                                    estado = formatearEstado(caso.estado)
+                                )
 
-                    CasoUsuario(
-                        asunto = "Error en Microsoft Office",
-                        estado = "Registrado"
-                    )
+                                if (index < casos.lastIndex) {
+                                    Divider()
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
-            Spacer(
-                modifier = Modifier.height(24.dp)
-            )
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Botón para crear un caso
             Card(
@@ -181,14 +216,12 @@ fun DashboardUsuarioScreen(
                     containerColor = MaterialTheme.colorScheme.primary
                 )
             ) {
-
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
                     contentAlignment = Alignment.Center
                 ) {
-
                     Text(
                         text = "+ Crear nuevo caso",
                         color = MaterialTheme.colorScheme.onPrimary,
@@ -199,17 +232,13 @@ fun DashboardUsuarioScreen(
             }
         }
 
-        // Menú lateral compartido con el dashboard técnico
+        // Menú lateral
         if (menuAbierto) {
-
-            // Fondo oscurecido al abrir el menú
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
-                        MaterialTheme.colorScheme.scrim.copy(
-                            alpha = 0.45f
-                        )
+                        MaterialTheme.colorScheme.scrim.copy(alpha = 0.45f)
                     )
                     .clickable {
                         menuAbierto = false
@@ -217,22 +246,18 @@ fun DashboardUsuarioScreen(
             )
 
             MenuLateral(
-
                 onPerfilClick = {
                     menuAbierto = false
                     onPerfilClick()
                 },
-
                 onCasosClick = {
                     menuAbierto = false
                     onCasosClick()
                 },
-
                 onConfiguracionClick = {
                     menuAbierto = false
                     onConfiguracionClick()
                 },
-
                 onCerrarSesionClick = {
                     menuAbierto = false
                     onCerrarSesionClick()
@@ -242,21 +267,17 @@ fun DashboardUsuarioScreen(
     }
 }
 
-
 @Composable
 private fun CasoUsuario(
     asunto: String,
     estado: String
 ) {
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 16.dp),
-
         verticalAlignment = Alignment.CenterVertically
     ) {
-
         Text(
             text = asunto,
             modifier = Modifier.weight(1f),
@@ -264,14 +285,22 @@ private fun CasoUsuario(
             color = MaterialTheme.colorScheme.onSurface
         )
 
-        Spacer(
-            modifier = Modifier.width(12.dp)
-        )
+        Spacer(modifier = Modifier.width(12.dp))
 
         Text(
             text = estado,
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.primary
         )
+    }
+}
+
+private fun formatearEstado(estado: String): String {
+    return when (estado) {
+        "registrado" -> "Registrado"
+        "en_proceso" -> "En proceso"
+        "solucionado" -> "Solucionado"
+        "cerrado" -> "Cerrado"
+        else -> estado
     }
 }

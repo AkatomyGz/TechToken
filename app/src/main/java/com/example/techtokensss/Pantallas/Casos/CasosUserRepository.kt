@@ -75,5 +75,49 @@ class CasosRepository {
         }
     }
 
+    suspend fun obtenerUltimosCasos(limite: Long = 3): Result<List<Caso>> {
+        return runCatching {
+            val usuario = supabase.auth.currentUserOrNull()
+                ?: error("No hay una sesión iniciada.")
+
+            supabase
+                .from("casos")
+                .select {
+                    filter {
+                        eq("id_creador", usuario.id)
+                    }
+
+                    order(
+                        column = "fecha_creacion",
+                        order = io.github.jan.supabase.postgrest.query.Order.DESCENDING
+                    )
+
+                    limit(limite)
+                }
+                .decodeList<Caso>()
+        }
+    }
+
+    suspend fun obtenerNombreUsuario(): Result<String> {
+        return runCatching {
+            val usuario = supabase.auth.currentUserOrNull()
+                ?: error("No hay una sesión iniciada.")
+
+            val perfil = supabase
+                .from("perfiles")
+                .select {
+                    filter {
+                        eq("id_perfil", usuario.id)
+                    }
+                }
+                .decodeList<com.example.techtokensss.Datos.Modelos.Perfil>()
+                .firstOrNull()
+
+            perfil?.nombres
+                ?.takeIf { it.isNotBlank() }
+                ?: "Usuario"
+        }
+    }
+
 
 }

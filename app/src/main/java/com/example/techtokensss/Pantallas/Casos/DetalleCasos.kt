@@ -56,8 +56,7 @@ fun DetalleCasoScreen(
     val estadosDisponibles = listOf(
         "registrado",
         "en_proceso",
-        "solucionado",
-        "cerrado"
+        "solucionado"
     )
 
     LaunchedEffect(idCaso) {
