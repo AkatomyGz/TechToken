@@ -31,6 +31,7 @@ import com.example.techtokensss.Pantallas.Perfil.UserScreen
 import com.example.techtokensss.Pantallas.RegistroUser.RegistroScreen
 import com.example.techtokensss.Pantallas.RegistroCaso.CrearCasoScreen
 import com.example.techtokensss.Pantallas.Casos.DetalleCasoScreen
+import com.example.techtokensss.Pantallas.CasosTecnico.CasosTecnicoScreen
 
 @Composable
 fun AppNavigation(
@@ -341,6 +342,17 @@ fun AppNavigation(
                 },
                 onHistorialClick = { id ->
                     navController.navigate("HistorialCaso/$id")
+                }
+            )
+        }
+
+        composable(route = "CasosTecnico") {
+            CasosTecnicoScreen(
+                onVolverClick = {
+                    navController.popBackStack()
+                },
+                onCasoClick = { idCaso ->
+                    navController.navigate("DetalleCaso/$idCaso")
                 }
             )
         }

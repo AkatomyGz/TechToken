@@ -8,6 +8,7 @@ import io.github.jan.supabase.postgrest.from
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import io.github.jan.supabase.postgrest.postgrest
+import android.util.Log
 
 class CasosTecnicoRepository {
 
@@ -31,10 +32,12 @@ class CasosTecnicoRepository {
     // Obtiene los casos registrados que todavía están disponibles.
     suspend fun obtenerBandeja(): Result<List<Caso>> {
         return runCatching {
-            supabase.auth.currentUserOrNull()
+            val usuario = supabase.auth.currentUserOrNull()
                 ?: error("No hay una sesión iniciada.")
 
-            supabase
+            Log.d("CASOS_TECNICO", "UUID sesión: ${usuario.id}")
+
+            val resultado = supabase
                 .from("casos")
                 .select {
                     filter {
@@ -42,7 +45,22 @@ class CasosTecnicoRepository {
                     }
                 }
                 .decodeList<Caso>()
-                .filter { it.idEncargado == null }
+
+            Log.d(
+                "CASOS_TECNICO",
+                "Registrados recibidos: ${resultado.size}"
+            )
+
+            val disponibles = resultado.filter {
+                it.idEncargado == null
+            }
+
+            Log.d(
+                "CASOS_TECNICO",
+                "Casos disponibles: ${disponibles.size}"
+            )
+
+            disponibles
         }
     }
 
