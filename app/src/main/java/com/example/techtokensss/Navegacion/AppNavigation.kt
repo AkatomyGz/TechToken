@@ -333,10 +333,28 @@ fun AppNavigation(
 
 
         composable(route = "DetalleCaso/{idCaso}") { backStackEntry ->
+
             val idCaso = backStackEntry.arguments?.getString("idCaso") ?: ""
 
             DetalleCasoScreen(
                 idCaso = idCaso,
+                esTecnico = false,
+                onVolverClick = {
+                    navController.popBackStack()
+                },
+                onHistorialClick = { id ->
+                    navController.navigate("HistorialCaso/$id")
+                }
+            )
+        }
+
+        composable(route = "DetalleCasoTecnico/{idCaso}") { backStackEntry ->
+
+            val idCaso = backStackEntry.arguments?.getString("idCaso") ?: ""
+
+            DetalleCasoScreen(
+                idCaso = idCaso,
+                esTecnico = true,
                 onVolverClick = {
                     navController.popBackStack()
                 },
@@ -352,7 +370,7 @@ fun AppNavigation(
                     navController.popBackStack()
                 },
                 onCasoClick = { idCaso ->
-                    navController.navigate("DetalleCaso/$idCaso")
+                    navController.navigate("DetalleCasoTecnico/$idCaso")
                 }
             )
         }

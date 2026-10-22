@@ -16,30 +16,57 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
+import kotlinx.coroutines.launch
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import com.example.techtokensss.Datos.Modelos.Caso
 import com.example.techtokensss.Datos.Modelos.Categoria
+import com.example.techtokensss.Pantallas.CasosTecnico.CasosTecnicoRepository
 
 @Composable
 fun DetalleCasoScreen(
     idCaso: String,
+    esTecnico: Boolean = false,
     onVolverClick: () -> Unit,
     onHistorialClick: (String) -> Unit
 ) {
     val repository = remember { CasosRepository() }
+    val tecnicoRepository = remember { CasosTecnicoRepository() }
+    val scope = rememberCoroutineScope()
 
     var caso by remember { mutableStateOf<Caso?>(null) }
     var categorias by remember { mutableStateOf<List<Categoria>>(emptyList()) }
     var cargando by remember { mutableStateOf(true) }
+    var guardando by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+    var mensaje by remember { mutableStateOf<String?>(null) }
     var nombreEncargado by remember { mutableStateOf<String?>(null) }
+
+    var categoriaSeleccionada by remember { mutableStateOf("") }
+    var estadoSeleccionado by remember { mutableStateOf("") }
+
+    var categoriaMenuAbierto by remember { mutableStateOf(false) }
+    var estadoMenuAbierto by remember { mutableStateOf(false) }
+
+    val estadosDisponibles = listOf(
+        "registrado",
+        "en_proceso",
+        "solucionado",
+        "cerrado"
+    )
 
     LaunchedEffect(idCaso) {
         cargando = true
         error = null
+        mensaje = null
         caso = null
         nombreEncargado = null
 
-        // Primero cargamos el caso.
         repository.obtenerCasoPorId(idCaso)
             .onSuccess { resultado ->
                 caso = resultado
@@ -47,7 +74,9 @@ fun DetalleCasoScreen(
                 if (resultado == null) {
                     error = "No se encontró el caso o no tienes permiso para verlo."
                 } else {
-                    // Después consultamos al encargado, si existe.
+                    categoriaSeleccionada = resultado.idCategoria
+                    estadoSeleccionado = resultado.estado
+
                     resultado.idEncargado?.let { id ->
                         repository.obtenerEncargado(id)
                             .onSuccess { nombre ->
@@ -73,6 +102,10 @@ fun DetalleCasoScreen(
         .find { it.idCategoria == caso?.idCategoria }
         ?.nombre ?: "Sin categoría"
 
+    val nombreCategoriaSeleccionada = categorias
+        .find { it.idCategoria == categoriaSeleccionada }
+        ?.nombre ?: "Selecciona una categoría"
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -87,7 +120,7 @@ fun DetalleCasoScreen(
         ) {
             IconButton(onClick = onVolverClick) {
                 Icon(
-                    imageVector = Icons.Default.ArrowBack,
+                    Icons.Default.ArrowBack,
                     contentDescription = "Volver",
                     tint = Color.White
                 )
@@ -113,7 +146,7 @@ fun DetalleCasoScreen(
             )
 
             Button(onClick = onVolverClick) {
-                Text("Volver a mis casos")
+                Text("Volver")
             }
         } else {
             caso?.let { actual ->
@@ -144,39 +177,214 @@ fun DetalleCasoScreen(
                             fontWeight = FontWeight.SemiBold
                         )
 
-                        Text(actual.descripcion)
+                        Text(
+                            text = actual.descripcion,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
 
                         HorizontalDivider()
 
-                        DatoCaso("Estado", actual.estado)
-                        DatoCaso("Categoría", nombreCategoria)
+                        DatoCaso(
+                            titulo = "Estado actual",
+                            valor = formatearEstado(actual.estado)
+                        )
 
                         DatoCaso(
-                            "Encargado",
-                            when {
-                                actual.idEncargado == null -> "Sin asignar"
-                                nombreEncargado != null -> nombreEncargado!!
-                                else -> "No se pudo cargar el perfil del encargado"
+                            titulo = "Categoría actual",
+                            valor = nombreCategoria
+                        )
+
+                        DatoCaso(
+                            titulo = "Encargado",
+                            valor = when {
+                                actual.idEncargado == null ->
+                                    "Sin asignar"
+
+                                nombreEncargado != null ->
+                                    nombreEncargado!!
+
+                                else ->
+                                    "No se pudo cargar el perfil del encargado"
                             }
                         )
 
                         DatoCaso(
-                            "Fecha de creación",
-                            actual.fechaCreacion
+                            titulo = "Fecha de creación",
+                            valor = formatearFecha(actual.fechaCreacion)
                         )
 
                         DatoCaso(
-                            "Fecha de cierre",
-                            actual.fechaCierre
-                                ?: "Todavía no se ha cerrado"
+                            titulo = "Fecha de cierre",
+                            valor = actual.fechaCierre?.let {
+                                formatearFecha(it)
+                            } ?: "Todavía no se ha cerrado"
                         )
 
-                        DatoCaso("ID del caso", actual.idCaso)
+                        DatoCaso(
+                            titulo = "ID del caso",
+                            valor = actual.idCaso
+                        )
+
+                        // Solo los técnicos pueden editar.
+                        if (esTecnico) {
+                            HorizontalDivider()
+
+                            Text(
+                                text = "Gestionar caso",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Text(
+                                text = "Categoría",
+                                style = MaterialTheme.typography.labelLarge
+                            )
+
+                            Box(modifier = Modifier.fillMaxWidth()) {
+                                OutlinedButton(
+                                    onClick = {
+                                        categoriaMenuAbierto = true
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = nombreCategoriaSeleccionada,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+
+                                DropdownMenu(
+                                    expanded = categoriaMenuAbierto,
+                                    onDismissRequest = {
+                                        categoriaMenuAbierto = false
+                                    }
+                                ) {
+                                    categorias.forEach { categoria ->
+                                        DropdownMenuItem(
+                                            text = {
+                                                Text(categoria.nombre)
+                                            },
+                                            onClick = {
+                                                categoriaSeleccionada =
+                                                    categoria.idCategoria
+                                                categoriaMenuAbierto = false
+                                                mensaje = null
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+
+                            Text(
+                                text = "Estado",
+                                style = MaterialTheme.typography.labelLarge
+                            )
+
+                            Box(modifier = Modifier.fillMaxWidth()) {
+                                OutlinedButton(
+                                    onClick = {
+                                        estadoMenuAbierto = true
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(formatearEstado(estadoSeleccionado))
+                                }
+
+                                DropdownMenu(
+                                    expanded = estadoMenuAbierto,
+                                    onDismissRequest = {
+                                        estadoMenuAbierto = false
+                                    }
+                                ) {
+                                    estadosDisponibles.forEach { estado ->
+                                        DropdownMenuItem(
+                                            text = {
+                                                Text(formatearEstado(estado))
+                                            },
+                                            onClick = {
+                                                estadoSeleccionado = estado
+                                                estadoMenuAbierto = false
+                                                mensaje = null
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+
+                            Button(
+                                onClick = {
+                                    scope.launch {
+                                        guardando = true
+                                        mensaje = null
+
+                                        val resultado =
+                                            tecnicoRepository.actualizarCaso(
+                                                idCaso = actual.idCaso,
+                                                idCategoria = categoriaSeleccionada,
+                                                estado = estadoSeleccionado
+                                            )
+
+                                        if (resultado.isSuccess) {
+                                            repository.obtenerCasoPorId(idCaso)
+                                                .onSuccess { actualizado ->
+                                                    if (actualizado != null) {
+                                                        caso = actualizado
+                                                        categoriaSeleccionada =
+                                                            actualizado.idCategoria
+                                                        estadoSeleccionado =
+                                                            actualizado.estado
+                                                    }
+                                                }
+
+                                            mensaje = "Cambios guardados correctamente."
+                                        } else {
+                                            mensaje = resultado.exceptionOrNull()
+                                                ?.message
+                                                ?: "No se pudieron guardar los cambios."
+                                        }
+
+                                        guardando = false
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = !guardando &&
+                                        categoriaSeleccionada.isNotBlank() &&
+                                        estadoSeleccionado in estadosDisponibles
+                            ) {
+                                if (guardando) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        strokeWidth = 2.dp
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Guardando...")
+                                } else {
+                                    Text("Guardar cambios")
+                                }
+                            }
+
+                            mensaje?.let {
+                                Text(
+                                    text = it,
+                                    color = if (
+                                        it.startsWith("Cambios guardados")
+                                    ) {
+                                        Color(0xFF2E7D32)
+                                    } else {
+                                        Color(0xFFB3261E)
+                                    },
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
                     }
                 }
 
                 OutlinedButton(
-                    onClick = { onHistorialClick(actual.idCaso) },
+                    onClick = {
+                        onHistorialClick(actual.idCaso)
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
@@ -184,12 +392,10 @@ fun DetalleCasoScreen(
                     )
                 ) {
                     Icon(
-                        imageVector = Icons.Default.History,
+                        Icons.Default.History,
                         contentDescription = null
                     )
-
                     Spacer(Modifier.width(8.dp))
-
                     Text("Ver historial")
                 }
             }
@@ -218,3 +424,33 @@ private fun DatoCaso(
         )
     }
 }
+
+private fun formatearFecha(fecha: String?): String {
+    if (fecha.isNullOrBlank()) return "Sin fecha"
+
+    return runCatching {
+        val formato = DateTimeFormatter.ofPattern(
+            "dd/MM/yyyy HH:mm",
+            Locale("es", "CO")
+        )
+
+        OffsetDateTime.parse(fecha)
+            .atZoneSameInstant(ZoneId.of("America/Bogota"))
+            .format(formato)
+    }.getOrElse {
+        fecha
+    }
+}
+
+private fun formatearEstado(estado: String): String {
+    return when (estado) {
+        "registrado" -> "Registrado"
+        "en_proceso" -> "En proceso"
+        "solucionado" -> "Solucionado"
+        "cerrado" -> "Cerrado"
+        else -> estado
+            .replace("_", " ")
+            .replaceFirstChar { it.uppercase() }
+    }
+}
+

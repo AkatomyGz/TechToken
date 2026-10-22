@@ -1,39 +1,26 @@
 
 package com.example.techtokensss.Pantallas.Dashboard
 
-import androidx.compose.material3.MaterialTheme
-
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Text
-
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.techtokensss.Pantallas.CasosTecnico.CasosTecnicoRepository
+import kotlinx.coroutines.launch
 
+private val ColorRegistrado = Color(0xFF4F8EF7)
+private val ColorEnProceso = Color(0xFFFFB74D)
+private val ColorSolucionado = Color(0xFF36A879)
+private val ColorCerrado = Color(0xFF9B8AFB)
 
 @Composable
 fun DashboardScreen(
@@ -43,203 +30,261 @@ fun DashboardScreen(
     onConfiguracionClick: () -> Unit,
     onCerrarSesionClick: () -> Unit
 ) {
+    val repository = remember { CasosTecnicoRepository() }
+    val scope = rememberCoroutineScope()
 
+    var menuAbierto by remember { mutableStateOf(false) }
+    var estadisticas by remember {
+        mutableStateOf(EstadisticasCasos())
+    }
+    var cargando by remember { mutableStateOf(true) }
+    var error by remember { mutableStateOf<String?>(null) }
 
-    var menuAbierto by remember {
-        mutableStateOf(false)
+    fun cargarEstadisticas() {
+        scope.launch {
+            cargando = true
+            error = null
+
+            repository.obtenerEstadisticas()
+                .onSuccess {
+                    estadisticas = it
+                }
+                .onFailure {
+                    error = it.message
+                        ?: "No se pudieron cargar las estadísticas."
+                }
+
+            cargando = false
+        }
     }
 
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
+    LaunchedEffect(Unit) {
+        cargarEstadisticas()
+    }
 
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                .padding(20.dp),
-
+                .padding(horizontal = 16.dp, vertical = 10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-
-                Button(
-                    onClick = {
-                        menuAbierto = true
-                    }
-                ) {
+                Button(onClick = { menuAbierto = true }) {
                     Text("☰")
                 }
 
-
                 Text(
-
                     text = "TechToken",
                     color = MaterialTheme.colorScheme.onBackground,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold
                 )
 
-                Button(
-                    onClick = {
-                        onPerfilClick()
-                    }
-                ) {
+                Button(onClick = onPerfilClick) {
                     Text("👤")
                 }
             }
 
-            Spacer(
-                modifier = Modifier.height(30.dp)
-            )
+            Spacer(Modifier.height(30.dp))
 
-            Column(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-
+            Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
-
                     text = "Hola 👋",
                     color = MaterialTheme.colorScheme.onBackground,
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold
-
                 )
 
-                Spacer(
-                    modifier = Modifier.height(6.dp)
-                )
+                Spacer(Modifier.height(6.dp))
 
                 Text(
-
                     text = "Resumen de tus casos",
-                    color = MaterialTheme.colorScheme.onSurface.copy(
-                        alpha = 0.7f
-                    ),
-
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                     fontSize = 16.sp
                 )
             }
 
-            Spacer(
-                modifier = Modifier.height(28.dp)
-            )
+            Spacer(Modifier.height(24.dp))
 
+            // Gráfico pastel
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(230.dp),
-
+                modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
-
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
             ) {
-
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-
                     Text(
-                        text = "GRÁFICO",
-                        color = MaterialTheme.colorScheme.primary,
+                        text = "Distribución de casos",
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
                     )
+
+                    Spacer(Modifier.height(16.dp))
+
+                    when {
+                        cargando -> {
+                            CircularProgressIndicator()
+                        }
+
+                        error != null -> {
+                            Text(
+                                text = error!!,
+                                color = MaterialTheme.colorScheme.error
+                            )
+
+                            Spacer(Modifier.height(8.dp))
+
+                            Button(onClick = { cargarEstadisticas() }) {
+                                Text("Reintentar")
+                            }
+                        }
+
+                        estadisticas.total == 0 -> {
+                            Text(
+                                text = "Todavía no tienes casos asignados.",
+                                color = MaterialTheme.colorScheme.onSurface
+                                    .copy(alpha = 0.7f)
+                            )
+                        }
+
+
+                        else -> {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                GraficoPastel(
+                                    estadisticas = estadisticas,
+                                    modifier = Modifier.weight(1f)
+                                )
+
+                                Column(
+                                    modifier = Modifier.weight(1.2f),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    LeyendaEstado(
+                                        titulo = "Registrados",
+                                        color = ColorRegistrado
+                                    )
+
+                                    LeyendaEstado(
+                                        titulo = "En proceso",
+                                        color = ColorEnProceso
+                                    )
+
+                                    LeyendaEstado(
+                                        titulo = "Solucionados",
+                                        color = ColorSolucionado
+                                    )
+
+                                    LeyendaEstado(
+                                        titulo = "Cerrados",
+                                        color = ColorCerrado
+                                    )
+                                }
+                            }
+                        }
+
+                    }
                 }
             }
 
-            Spacer(
-                modifier = Modifier.height(28.dp)
-            )
+            Spacer(Modifier.height(24.dp))
 
             Text(
                 text = "Estado de casos",
-
                 color = MaterialTheme.colorScheme.onBackground,
-
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(
-                modifier = Modifier.height(16.dp)
-            )
+            Spacer(Modifier.height(16.dp))
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-
                 TarjetaEstado(
                     titulo = "Registrados",
-                    cantidad = "12",
+                    cantidad = estadisticas.registrados.toString(),
                     modifier = Modifier.weight(1f)
                 )
 
                 TarjetaEstado(
                     titulo = "En proceso",
-                    cantidad = "5",
+                    cantidad = estadisticas.enProceso.toString(),
                     modifier = Modifier.weight(1f)
                 )
             }
 
-            Spacer(
-                modifier = Modifier.height(12.dp)
-            )
+            Spacer(Modifier.height(12.dp))
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-
                 TarjetaEstado(
                     titulo = "Cerrados",
-                    cantidad = "3",
+                    cantidad = estadisticas.cerrados.toString(),
                     modifier = Modifier.weight(1f)
                 )
 
                 TarjetaEstado(
                     titulo = "Solucionados",
-                    cantidad = "7",
+                    cantidad = estadisticas.solucionados.toString(),
                     modifier = Modifier.weight(1f)
                 )
             }
-        }
-        if (menuAbierto) {
 
+            Spacer(Modifier.height(16.dp))
+
+            if (!cargando && error == null) {
+                Text(
+                    text = "Total de casos asignados: ${estadisticas.total}",
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+
+        if (menuAbierto) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color(0x88000000))
-                    .clickable {
-                        menuAbierto = false
-                    }
+                    .clickable { menuAbierto = false }
             )
 
-
             MenuLateral(
-
                 onPerfilClick = {
                     menuAbierto = false
                     onPerfilClick()
                 },
-
                 onCasosClick = {
                     menuAbierto = false
                     onCasosClick()
                 },
-
                 onConfiguracionClick = {
                     menuAbierto = false
                     onConfiguracionClick()
                 },
-
                 onCerrarSesionClick = {
                     menuAbierto = false
                     onCerrarSesionClick()
@@ -249,6 +294,66 @@ fun DashboardScreen(
     }
 }
 
+@Composable
+private fun GraficoPastel(
+    estadisticas: EstadisticasCasos,
+    modifier: Modifier = Modifier
+) {
+    val segmentos = listOf(
+        estadisticas.registrados to ColorRegistrado,
+        estadisticas.enProceso to ColorEnProceso,
+        estadisticas.solucionados to ColorSolucionado,
+        estadisticas.cerrados to ColorCerrado
+    )
+
+    Canvas(
+        modifier = modifier
+            .size(140.dp)
+            .padding(4.dp)
+    ) {
+        var anguloInicial = -90f
+        val total = estadisticas.total.toFloat()
+
+        if (total > 0f) {
+            segmentos.forEach { (cantidad, color) ->
+                if (cantidad > 0) {
+                    val barrido = cantidad / total * 360f
+
+                    drawArc(
+                        color = color,
+                        startAngle = anguloInicial,
+                        sweepAngle = barrido,
+                        useCenter = true
+                    )
+
+                    anguloInicial += barrido
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LeyendaEstado(
+    titulo: String,
+    color: Color
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(7.dp)
+    ) {
+        Canvas(modifier = Modifier.size(10.dp)) {
+            drawCircle(color = color)
+        }
+
+        Text(
+            text = titulo,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontSize = 12.sp,
+            maxLines = 1
+        )
+    }
+}
 
 @Composable
 fun TarjetaEstado(
@@ -256,39 +361,29 @@ fun TarjetaEstado(
     cantidad: String,
     modifier: Modifier = Modifier
 ) {
-
     Card(
-        modifier = modifier.height(110.dp),
-
+        modifier = modifier.height(78.dp),
         shape = RoundedCornerShape(20.dp),
-
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-
+                .padding(10.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-
             Text(
                 text = titulo,
-                color = MaterialTheme.colorScheme.onSurface.copy(
-                    alpha = 0.7f
-                ),
-
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 fontSize = 14.sp
             )
 
             Text(
                 text = cantidad,
                 color = MaterialTheme.colorScheme.onSurface,
-
-                fontSize = 30.sp,
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
             )
         }
