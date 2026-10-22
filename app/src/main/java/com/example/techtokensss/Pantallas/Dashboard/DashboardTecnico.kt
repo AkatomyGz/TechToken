@@ -16,6 +16,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.techtokensss.Pantallas.CasosTecnico.CasosTecnicoRepository
 import kotlinx.coroutines.launch
+import io.github.jan.supabase.realtime.PostgresAction
+import io.github.jan.supabase.realtime.channel
+import io.github.jan.supabase.realtime.postgresChangeFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.awaitCancellation
+import com.example.techtokensss.Datos.Supabase.supabase
+import io.github.jan.supabase.realtime.realtime
 
 private val ColorRegistrado = Color(0xFF4F8EF7)
 private val ColorEnProceso = Color(0xFFFFB74D)
@@ -60,6 +67,28 @@ fun DashboardScreen(
 
     LaunchedEffect(Unit) {
         cargarEstadisticas()
+
+        val canal = supabase.channel("dashboard-casos")
+
+        val cambios = canal.postgresChangeFlow<PostgresAction>(
+            schema = "public"
+        ) {
+            table = "casos"
+        }
+
+        val trabajo = launch {
+            cambios.collect {
+                cargarEstadisticas()
+            }
+        }
+
+        try {
+            canal.subscribe()
+            awaitCancellation()
+        } finally {
+            trabajo.cancel()
+            supabase.realtime.removeChannel(canal)
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
