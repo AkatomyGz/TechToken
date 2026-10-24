@@ -1,33 +1,38 @@
-
 package com.example.techtokensss.Pantallas.Dashboard
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.example.techtokensss.Datos.Supabase.supabase
 import com.example.techtokensss.Pantallas.CasosTecnico.CasosTecnicoRepository
-import kotlinx.coroutines.launch
+import com.example.techtokensss.ui.components.*
+import com.example.techtokensss.ui.theme.APP_NAME
+import com.example.techtokensss.ui.theme.TechTicketTheme
 import io.github.jan.supabase.realtime.PostgresAction
 import io.github.jan.supabase.realtime.channel
 import io.github.jan.supabase.realtime.postgresChangeFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.awaitCancellation
-import com.example.techtokensss.Datos.Supabase.supabase
 import io.github.jan.supabase.realtime.realtime
-
-private val ColorRegistrado = Color(0xFF4F8EF7)
-private val ColorEnProceso = Color(0xFFFFB74D)
-private val ColorSolucionado = Color(0xFF36A879)
-private val ColorCerrado = Color(0xFF9B8AFB)
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.launch
 
 @Composable
 fun DashboardScreen(
@@ -37,6 +42,9 @@ fun DashboardScreen(
     onConfiguracionClick: () -> Unit,
     onCerrarSesionClick: () -> Unit
 ) {
+    // ------------------------------------------------------------------
+    // LÓGICA Y SUSCRIPCIÓN REALTIME (sin cambios)
+    // ------------------------------------------------------------------
     val repository = remember { CasosTecnicoRepository() }
     val scope = rememberCoroutineScope()
 
@@ -91,329 +99,358 @@ fun DashboardScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    // Mientras carga o si hubo error, no se muestran números que podrían engañar.
+    val hayDatos = !cargando && error == null
+    fun valor(n: Int): String = if (hayDatos) n.toString() else "–"
+
+    val coloresEstado = TechTicketTheme.colors
+
+    // ------------------------------------------------------------------
+    // INTERFAZ
+    // ------------------------------------------------------------------
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .screenInsets()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+            TechTicketTopBar(
+                titulo = APP_NAME,
+                navigationIcon = {
+                    IconButton(
+                        onClick = {
+                            menuAbierto = true
+                            onMenuClick()
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Menu,
+                            contentDescription = "Abrir menú"
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onPerfilClick) {
+                        Icon(
+                            imageVector = Icons.Outlined.AccountCircle,
+                            contentDescription = "Perfil"
+                        )
+                    }
+                }
+            )
+
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = "Panel del técnico",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+
+                Text(
+                    text = "Resumen de tus casos asignados.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Button(
+                onClick = onCasosClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 56.dp),
+                shape = MaterialTheme.shapes.medium
             ) {
-                Button(onClick = { menuAbierto = true }) {
-                    Text("☰")
-                }
-
-                Text(
-                    text = "TechToken",
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
+                Icon(
+                    imageVector = Icons.Outlined.Folder,
+                    contentDescription = null
                 )
-
-                Button(onClick = onPerfilClick) {
-                    Text("👤")
-                }
-            }
-
-            Spacer(Modifier.height(30.dp))
-
-            Column(modifier = Modifier.fillMaxWidth()) {
+                Spacer(Modifier.width(8.dp))
                 Text(
-                    text = "Hola 👋",
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(Modifier.height(6.dp))
-
-                Text(
-                    text = "Resumen de tus casos",
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                    fontSize = 16.sp
+                    text = "Ver casos y bandeja",
+                    style = MaterialTheme.typography.labelLarge
                 )
             }
 
-            Spacer(Modifier.height(24.dp))
-
-            // Gráfico pastel
+            // Distribución
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
+                shape = MaterialTheme.shapes.large,
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                ),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(12.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
                         text = "Distribución de casos",
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
-
-                    Spacer(Modifier.height(16.dp))
 
                     when {
                         cargando -> {
-                            CircularProgressIndicator()
+                            LoadingState(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 24.dp)
+                            )
                         }
 
                         error != null -> {
-                            Text(
-                                text = error!!,
-                                color = MaterialTheme.colorScheme.error
+                            ErrorState(
+                                mensaje = error.orEmpty(),
+                                modifier = Modifier.fillMaxWidth(),
+                                onReintentar = { cargarEstadisticas() }
                             )
-
-                            Spacer(Modifier.height(8.dp))
-
-                            Button(onClick = { cargarEstadisticas() }) {
-                                Text("Reintentar")
-                            }
                         }
 
                         estadisticas.total == 0 -> {
-                            Text(
-                                text = "Todavía no tienes casos asignados.",
-                                color = MaterialTheme.colorScheme.onSurface
-                                    .copy(alpha = 0.7f)
+                            EmptyState(
+                                titulo = "Todavía no tienes casos asignados.",
+                                descripcion = "Reclama casos desde la bandeja para ver tus estadísticas.",
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
 
-
                         else -> {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.Center
                             ) {
-                                GraficoPastel(
-                                    estadisticas = estadisticas,
-                                    modifier = Modifier.weight(1f)
-                                )
-
-                                Column(
-                                    modifier = Modifier.weight(1.2f),
-                                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    LeyendaEstado(
-                                        titulo = "Registrados",
-                                        color = ColorRegistrado
-                                    )
-
-                                    LeyendaEstado(
-                                        titulo = "En proceso",
-                                        color = ColorEnProceso
-                                    )
-
-                                    LeyendaEstado(
-                                        titulo = "Solucionados",
-                                        color = ColorSolucionado
-                                    )
-
-                                    LeyendaEstado(
-                                        titulo = "Cerrados",
-                                        color = ColorCerrado
-                                    )
-                                }
+                                GraficoDona(estadisticas = estadisticas)
                             }
                         }
-
                     }
                 }
             }
 
-            Spacer(Modifier.height(24.dp))
-
+            // Cantidades por estado
             Text(
                 text = "Estado de casos",
-                color = MaterialTheme.colorScheme.onBackground,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground
             )
 
-            Spacer(Modifier.height(16.dp))
-
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 TarjetaEstado(
                     titulo = "Registrados",
-                    cantidad = estadisticas.registrados.toString(),
-                    modifier = Modifier.weight(1f)
+                    cantidad = valor(estadisticas.registrados),
+                    colorIndicador = coloresEstado.registrado.solid,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
                 )
 
                 TarjetaEstado(
                     titulo = "En proceso",
-                    cantidad = estadisticas.enProceso.toString(),
-                    modifier = Modifier.weight(1f)
+                    cantidad = valor(estadisticas.enProceso),
+                    colorIndicador = coloresEstado.enProceso.solid,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
                 )
             }
 
-            Spacer(Modifier.height(12.dp))
-
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 TarjetaEstado(
-                    titulo = "Cerrados",
-                    cantidad = estadisticas.cerrados.toString(),
-                    modifier = Modifier.weight(1f)
+                    titulo = "Solucionados",
+                    cantidad = valor(estadisticas.solucionados),
+                    colorIndicador = coloresEstado.solucionado.solid,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
                 )
 
                 TarjetaEstado(
-                    titulo = "Solucionados",
-                    cantidad = estadisticas.solucionados.toString(),
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            if (!cargando && error == null) {
-                Text(
-                    text = "Total de casos asignados: ${estadisticas.total}",
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.SemiBold
+                    titulo = "Cerrados",
+                    cantidad = valor(estadisticas.cerrados),
+                    colorIndicador = coloresEstado.cerrado.solid,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
                 )
             }
         }
 
-        if (menuAbierto) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color(0x88000000))
-                    .clickable { menuAbierto = false }
-            )
-
-            MenuLateral(
-                onPerfilClick = {
-                    menuAbierto = false
-                    onPerfilClick()
-                },
-                onCasosClick = {
-                    menuAbierto = false
-                    onCasosClick()
-                },
-                onConfiguracionClick = {
-                    menuAbierto = false
-                    onConfiguracionClick()
-                },
-                onCerrarSesionClick = {
-                    menuAbierto = false
-                    onCerrarSesionClick()
-                }
-            )
-        }
-    }
-}
-
-@Composable
-private fun GraficoPastel(
-    estadisticas: EstadisticasCasos,
-    modifier: Modifier = Modifier
-) {
-    val segmentos = listOf(
-        estadisticas.registrados to ColorRegistrado,
-        estadisticas.enProceso to ColorEnProceso,
-        estadisticas.solucionados to ColorSolucionado,
-        estadisticas.cerrados to ColorCerrado
-    )
-
-    Canvas(
-        modifier = modifier
-            .size(140.dp)
-            .padding(4.dp)
-    ) {
-        var anguloInicial = -90f
-        val total = estadisticas.total.toFloat()
-
-        if (total > 0f) {
-            segmentos.forEach { (cantidad, color) ->
-                if (cantidad > 0) {
-                    val barrido = cantidad / total * 360f
-
-                    drawArc(
-                        color = color,
-                        startAngle = anguloInicial,
-                        sweepAngle = barrido,
-                        useCenter = true
-                    )
-
-                    anguloInicial += barrido
-                }
+        MenuLateralOverlay(
+            visible = menuAbierto,
+            onDismiss = { menuAbierto = false },
+            onPerfilClick = {
+                menuAbierto = false
+                onPerfilClick()
+            },
+            onCasosClick = {
+                menuAbierto = false
+                onCasosClick()
+            },
+            onConfiguracionClick = {
+                menuAbierto = false
+                onConfiguracionClick()
+            },
+            onCerrarSesionClick = {
+                menuAbierto = false
+                onCerrarSesionClick()
             }
-        }
-    }
-}
-
-@Composable
-private fun LeyendaEstado(
-    titulo: String,
-    color: Color
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(7.dp)
-    ) {
-        Canvas(modifier = Modifier.size(10.dp)) {
-            drawCircle(color = color)
-        }
-
-        Text(
-            text = titulo,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontSize = 12.sp,
-            maxLines = 1
         )
     }
 }
 
+/** Gráfico de dona con el total de casos en el centro. */
+@Composable
+private fun GraficoDona(
+    estadisticas: EstadisticasCasos,
+    modifier: Modifier = Modifier
+) {
+    val colores = TechTicketTheme.colors
+    val colorPista = MaterialTheme.colorScheme.surfaceVariant
+
+    val segmentos = listOf(
+        estadisticas.registrados to colores.registrado.solid,
+        estadisticas.enProceso to colores.enProceso.solid,
+        estadisticas.solucionados to colores.solucionado.solid,
+        estadisticas.cerrados to colores.cerrado.solid
+    )
+
+    val descripcion =
+        "Distribución de casos: ${estadisticas.registrados} registrados, " +
+                "${estadisticas.enProceso} en proceso, " +
+                "${estadisticas.solucionados} solucionados, " +
+                "${estadisticas.cerrados} cerrados"
+
+    Box(
+        modifier = modifier
+            .size(190.dp)
+            .semantics { contentDescription = descripcion },
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val grosor = 26.dp.toPx()
+            val origen = Offset(grosor / 2f, grosor / 2f)
+            val tamano = Size(size.width - grosor, size.height - grosor)
+            val total = estadisticas.total.toFloat()
+
+            // Anillo de fondo
+            drawArc(
+                color = colorPista,
+                startAngle = 0f,
+                sweepAngle = 360f,
+                useCenter = false,
+                topLeft = origen,
+                size = tamano,
+                style = Stroke(width = grosor)
+            )
+
+            if (total > 0f) {
+                val visibles = segmentos.count { it.first > 0 }
+                val hueco = if (visibles > 1) 3f else 0f
+                var anguloInicial = -90f
+
+                segmentos.forEach { (cantidad, color) ->
+                    if (cantidad > 0) {
+                        val barrido = cantidad / total * 360f
+
+                        drawArc(
+                            color = color,
+                            startAngle = anguloInicial + hueco / 2f,
+                            sweepAngle = barrido - hueco,
+                            useCenter = false,
+                            topLeft = origen,
+                            size = tamano,
+                            style = Stroke(width = grosor)
+                        )
+
+                        anguloInicial += barrido
+                    }
+                }
+            }
+        }
+
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = estadisticas.total.toString(),
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = "asignados",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+/**
+ * Tarjeta con una cantidad. Se mantiene pública y con los mismos tres primeros
+ * parámetros; [colorIndicador] es opcional.
+ */
 @Composable
 fun TarjetaEstado(
     titulo: String,
     cantidad: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    colorIndicador: Color = Color.Unspecified
 ) {
     Card(
-        modifier = modifier.height(78.dp),
-        shape = RoundedCornerShape(20.dp),
+        modifier = modifier,
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(10.dp),
-            verticalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = titulo,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                fontSize = 14.sp
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (colorIndicador != Color.Unspecified) {
+                    Box(
+                        modifier = Modifier
+                            .size(12.dp)
+                            .background(colorIndicador, CircleShape)
+                    )
+                }
+
+                Text(
+                    text = titulo,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
+            }
 
             Text(
                 text = cantidad,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }

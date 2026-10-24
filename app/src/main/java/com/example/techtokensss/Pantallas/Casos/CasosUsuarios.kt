@@ -1,31 +1,37 @@
 package com.example.techtokensss.Pantallas.Casos
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Inbox
+import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.techtokensss.Datos.Modelos.Caso
 import com.example.techtokensss.Datos.Modelos.Categoria
+import com.example.techtokensss.ui.components.*
+import com.example.techtokensss.ui.theme.TechTicketTheme
 
 @Composable
 fun CasosUsuarioScreen(
     onVolverClick: () -> Unit,
     onCasoClick: (String) -> Unit
 ) {
+    // ------------------------------------------------------------------
+    // LÓGICA (igual que antes; `recarga` solo permite reintentar la carga)
+    // ------------------------------------------------------------------
     val repository = remember { CasosRepository() }
 
     var casos by remember { mutableStateOf<List<Caso>>(emptyList()) }
@@ -39,9 +45,10 @@ fun CasosUsuarioScreen(
     var filtroSeleccionado by remember {
         mutableStateOf("Todos")
     }
+    var recarga by remember { mutableStateOf(0) }
 
-    // Cargar casos y categorías al abrir la pantalla.
-    LaunchedEffect(Unit) {
+    // Cargar casos y categorías al abrir la pantalla (o al reintentar).
+    LaunchedEffect(recarga) {
         cargando = true
         error = null
 
@@ -93,61 +100,73 @@ fun CasosUsuarioScreen(
         coincideBusqueda && coincideEstado
     }
 
+    val cantRegistrados = casos.count { it.estado == "registrado" }
+    val cantEnProceso = casos.count { it.estado == "en_proceso" }
+    val cantFinalizados = casos.count {
+        it.estado == "cerrado" || it.estado == "solucionado"
+    }
+
+    fun numero(n: Int): String = if (cargando) "–" else n.toString()
+
+    val coloresEstado = TechTicketTheme.colors
+
+    // ------------------------------------------------------------------
+    // INTERFAZ
+    // ------------------------------------------------------------------
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+            .background(MaterialTheme.colorScheme.background)
+            .screenInsets(),
         contentPadding = PaddingValues(
-            horizontal = 20.dp,
-            vertical = 12.dp
+            start = 20.dp,
+            end = 20.dp,
+            top = 12.dp,
+            bottom = 24.dp
         ),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onVolverClick) {
-                    Icon(
-                        Icons.Default.ArrowBack,
-                        contentDescription = "Volver"
-                    )
-                }
-
-                Column {
-                    Text(
-                        "Mis casos",
-                        fontSize = 25.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        "Consulta tus solicitudes de soporte",
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+            TechTicketTopBar(
+                titulo = "Mis casos",
+                subtitulo = "Consulta tus solicitudes de soporte",
+                onVolverClick = onVolverClick
+            )
         }
 
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large,
                 colors = CardDefaults.cardColors(
-                    containerColor =
-                        MaterialTheme.colorScheme.primaryContainer
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             ) {
-                Column(Modifier.padding(18.dp)) {
-                    Text("Total de casos")
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
                     Text(
-                        "${casos.size} solicitudes",
-                        fontSize = 27.sp,
-                        fontWeight = FontWeight.Bold
+                        text = "Total de casos",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     Text(
-                        "Casos registrados en tu cuenta",
-                        fontSize = 13.sp
+                        text = if (cargando) {
+                            "–"
+                        } else if (casos.size == 1) {
+                            "1 solicitud"
+                        } else {
+                            "${casos.size} solicitudes"
+                        },
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Text(
+                        text = "Casos registrados en tu cuenta",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
             }
@@ -155,44 +174,62 @@ fun CasosUsuarioScreen(
 
         item {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 ResumenEstado(
-                    "Registrados",
-                    casos.count { it.estado == "registrado" }.toString(),
-                    Modifier.weight(1f)
+                    titulo = "Registrados",
+                    cantidad = numero(cantRegistrados),
+                    colorIndicador = coloresEstado.registrado.solid,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
                 )
                 ResumenEstado(
-                    "En proceso",
-                    casos.count { it.estado == "en_proceso" }.toString(),
-                    Modifier.weight(1f)
+                    titulo = "En proceso",
+                    cantidad = numero(cantEnProceso),
+                    colorIndicador = coloresEstado.enProceso.solid,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
                 )
                 ResumenEstado(
-                    "Finalizados",
-                    casos.count {
-                        it.estado == "cerrado" ||
-                                it.estado == "solucionado"
-                    }.toString(),
-                    Modifier.weight(1f)
+                    titulo = "Finalizados",
+                    cantidad = numero(cantFinalizados),
+                    colorIndicador = coloresEstado.solucionado.solid,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
                 )
             }
         }
 
         item {
-            OutlinedTextField(
+            TechTicketTextField(
                 value = busqueda,
                 onValueChange = { busqueda = it },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                placeholder = { Text("Buscar por asunto...") },
+                label = "Buscar caso",
+                placeholder = "Buscar por asunto",
                 leadingIcon = {
                     Icon(
-                        Icons.Default.Search,
-                        contentDescription = "Buscar"
+                        imageVector = Icons.Filled.Search,
+                        contentDescription = null
                     )
                 },
-                shape = RoundedCornerShape(14.dp)
+                trailingIcon = if (busqueda.isNotEmpty()) {
+                    {
+                        IconButton(onClick = { busqueda = "" }) {
+                            Icon(
+                                imageVector = Icons.Filled.Close,
+                                contentDescription = "Limpiar búsqueda"
+                            )
+                        }
+                    }
+                } else {
+                    null
+                }
             )
         }
 
@@ -218,48 +255,64 @@ fun CasosUsuarioScreen(
             }
         }
 
-        item {
-            Text(
-                "${casosFiltrados.size} casos encontrados",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 13.sp
-            )
+        if (!cargando && error == null) {
+            item {
+                Text(
+                    text = if (casosFiltrados.size == 1) {
+                        "1 caso encontrado"
+                    } else {
+                        "${casosFiltrados.size} casos encontrados"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
 
         if (cargando) {
             item {
-                Box(
+                LoadingState(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(24.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+                        .padding(vertical = 32.dp),
+                    mensaje = "Cargando casos..."
+                )
             }
         } else if (error != null) {
             item {
-                Text(
-                    text = error!!,
-                    color = MaterialTheme.colorScheme.error
+                ErrorState(
+                    mensaje = error.orEmpty(),
+                    modifier = Modifier.fillMaxWidth(),
+                    onReintentar = { recarga++ }
                 )
             }
         } else if (casosFiltrados.isEmpty()) {
             item {
-                Text(
-                    "No se encontraron casos.",
-                    modifier = Modifier.padding(vertical = 24.dp)
-                )
+                if (casos.isEmpty()) {
+                    EmptyState(
+                        titulo = "Aún no tienes casos registrados.",
+                        descripcion = "Crea un caso desde el panel principal.",
+                        icono = Icons.Outlined.Inbox,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                } else {
+                    EmptyState(
+                        titulo = "No se encontraron casos",
+                        descripcion = "Prueba con otro filtro o búsqueda.",
+                        icono = Icons.Outlined.SearchOff,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         } else {
             items(
                 items = casosFiltrados,
                 key = { it.idCaso }
             ) { caso ->
-                TarjetaCasoReal(
+                CaseCard(
                     caso = caso,
-                    categoria = nombresCategorias[caso.idCategoria]
-                        ?: "Categoría",
+                    nombreCategoria = nombresCategorias[caso.idCategoria]
+                        ?: "Sin categoría",
                     onClick = { onCasoClick(caso.idCaso) }
                 )
             }
@@ -271,133 +324,45 @@ fun CasosUsuarioScreen(
 private fun ResumenEstado(
     titulo: String,
     cantidad: String,
+    colorIndicador: Color,
     modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier,
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
         ),
-        shape = RoundedCornerShape(14.dp)
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(
-            modifier = Modifier.padding(10.dp),
-            verticalArrangement = Arrangement.spacedBy(5.dp)
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            Text(
-                cantidad,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                titulo,
-                fontSize = 11.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
-private fun TarjetaCasoReal(
-    caso: Caso,
-    categoria: String,
-    onClick: () -> Unit
-) {
-    val estadoVisible = when (caso.estado) {
-        "registrado" -> "Registrado"
-        "en_proceso" -> "En proceso"
-        "solucionado" -> "Solucionado"
-        "cerrado" -> "Cerrado"
-        else -> caso.estado
-    }
-
-    val colorEstado = when (caso.estado) {
-        "registrado" -> MaterialTheme.colorScheme.primaryContainer
-        "en_proceso" -> MaterialTheme.colorScheme.tertiaryContainer
-        "solucionado" -> MaterialTheme.colorScheme.secondaryContainer
-        else -> MaterialTheme.colorScheme.surfaceVariant
-    }
-
-    val colorTextoEstado = when (caso.estado) {
-        "registrado" -> MaterialTheme.colorScheme.onPrimaryContainer
-        "en_proceso" -> MaterialTheme.colorScheme.onTertiaryContainer
-        "solucionado" -> MaterialTheme.colorScheme.onSecondaryContainer
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    ) {
-        Column(Modifier.padding(16.dp)) {
-            Text(
-                "CASO #${caso.idCaso.take(8)}",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            Text(
-                caso.asunto,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            Spacer(Modifier.height(6.dp))
-
-            Text(
-                caso.descripcion,
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 3
-            )
-
-            Spacer(Modifier.height(12.dp))
-
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        categoria,
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        caso.fechaCreacion.take(10),
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                Text(
+                    text = cantidad,
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
 
                 Box(
                     modifier = Modifier
-                        .background(
-                            colorEstado,
-                            RoundedCornerShape(50)
-                        )
-                        .padding(
-                            horizontal = 10.dp,
-                            vertical = 6.dp
-                        )
-                ) {
-                    Text(
-                        estadoVisible,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = colorTextoEstado
-                    )
-                }
+                        .size(8.dp)
+                        .background(colorIndicador, CircleShape)
+                )
             }
+
+            Text(
+                text = titulo,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1
+            )
         }
     }
 }
