@@ -1,6 +1,5 @@
 package com.example.techtokensss.Pantallas.Login
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -34,125 +33,126 @@ fun LoginScreen(
     // ------------------------------------------------------------------
     // INTERFAZ
     // ------------------------------------------------------------------
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .screenInsets()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        BrandHeader(subtitulo = "Bienvenido de nuevo")
+    CircuitBackground(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .screenInsets()
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            BrandHeader(subtitulo = "Bienvenido de nuevo")
 
-        Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(32.dp))
 
-        AuthCard {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    text = "Iniciar sesión",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = "Ingresa tus datos para continuar",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            TechTicketTextField(
-                value = correo,
-                onValueChange = {
-                    correo = it
-                    mensajeError = null
-                },
-                label = "Correo electrónico",
-                enabled = !cargando,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Email,
-                    imeAction = ImeAction.Next
-                )
-            )
-
-            TechTicketPasswordField(
-                value = contraseña,
-                onValueChange = {
-                    contraseña = it
-                    mensajeError = null
-                },
-                label = "Contraseña",
-                enabled = !cargando
-            )
-
-            mensajeError?.let {
-                FeedbackBanner(mensaje = it, tipo = TipoMensaje.Error)
-            }
-
-            Button(
-                onClick = {
-                    if (!cargando) {
-                        scope.launch {
-                            cargando = true
-                            mensajeError = null
-
-                            val resultado = onLoginClick(
-                                correo,
-                                contraseña
-                            )
-
-                            resultado.onFailure {
-                                mensajeError =
-                                    "Correo o contraseña incorrectos."
-                            }
-
-                            cargando = false
-                        }
-                    }
-                },
-                enabled = !cargando,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 52.dp),
-                shape = MaterialTheme.shapes.medium
-            ) {
-                if (cargando) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp,
-                        color = LocalContentColor.current
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = "Iniciando sesión...",
-                        style = MaterialTheme.typography.labelLarge
-                    )
-                } else {
+            AuthCard {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
                         text = "Iniciar sesión",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Ingresa tus datos para continuar",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                TechTicketTextField(
+                    value = correo,
+                    onValueChange = {
+                        correo = it
+                        mensajeError = null
+                    },
+                    label = "Correo electrónico",
+                    enabled = !cargando,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Email,
+                        imeAction = ImeAction.Next
+                    )
+                )
+
+                TechTicketPasswordField(
+                    value = contraseña,
+                    onValueChange = {
+                        contraseña = it
+                        mensajeError = null
+                    },
+                    label = "Contraseña",
+                    enabled = !cargando
+                )
+
+                mensajeError?.let {
+                    FeedbackBanner(mensaje = it, tipo = TipoMensaje.Error)
+                }
+
+                Button(
+                    onClick = {
+                        if (!cargando) {
+                            scope.launch {
+                                cargando = true
+                                mensajeError = null
+
+                                val resultado = onLoginClick(
+                                    correo,
+                                    contraseña
+                                )
+
+                                resultado.onFailure {
+                                    mensajeError =
+                                        "Correo o contraseña incorrectos."
+                                }
+
+                                cargando = false
+                            }
+                        }
+                    },
+                    enabled = !cargando,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 52.dp),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    if (cargando) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = LocalContentColor.current
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = "Iniciando sesión...",
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    } else {
+                        Text(
+                            text = "Iniciar sesión",
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    }
+                }
+
+                OutlinedButton(
+                    onClick = onRegisClick,
+                    enabled = !cargando,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 52.dp),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Text(
+                        text = "Crear una cuenta",
                         style = MaterialTheme.typography.labelLarge
                     )
                 }
             }
 
-            OutlinedButton(
-                onClick = onRegisClick,
-                enabled = !cargando,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 52.dp),
-                shape = MaterialTheme.shapes.medium
-            ) {
-                Text(
-                    text = "Crear una cuenta",
-                    style = MaterialTheme.typography.labelLarge
-                )
-            }
+            Spacer(Modifier.height(24.dp))
+
+            AuthFooter()
         }
-
-        Spacer(Modifier.height(24.dp))
-
-        AuthFooter()
     }
 }

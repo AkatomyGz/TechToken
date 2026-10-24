@@ -116,202 +116,203 @@ fun RegistroScreen(
     // ------------------------------------------------------------------
     // INTERFAZ
     // ------------------------------------------------------------------
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .screenInsets()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        BrandHeader(subtitulo = "Crea tu cuenta")
+    CircuitBackground(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .screenInsets()
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            BrandHeader(subtitulo = "Crea tu cuenta")
 
-        Spacer(Modifier.height(28.dp))
+            Spacer(Modifier.height(28.dp))
 
-        AuthCard {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    text = "Registrarse",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = "Completa tus datos para continuar",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            TechTicketTextField(
-                value = nombre,
-                onValueChange = {
-                    nombre = it
-                    errorNombre = ""
-                },
-                label = "Nombre",
-                errorText = errorNombre.takeIf { it.isNotEmpty() },
-                enabled = !cargando,
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Words,
-                    imeAction = ImeAction.Next
-                )
-            )
-
-            TechTicketTextField(
-                value = apellido,
-                onValueChange = {
-                    apellido = it
-                    errorApellido = ""
-                },
-                label = "Apellido",
-                errorText = errorApellido.takeIf { it.isNotEmpty() },
-                enabled = !cargando,
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Words,
-                    imeAction = ImeAction.Next
-                )
-            )
-
-            TechTicketTextField(
-                value = correo,
-                onValueChange = {
-                    correo = it
-                    errorCorreo = ""
-                },
-                label = "Correo electrónico",
-                errorText = errorCorreo.takeIf { it.isNotEmpty() },
-                enabled = !cargando,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Email,
-                    imeAction = ImeAction.Next
-                )
-            )
-
-            TechTicketTextField(
-                value = numeroContacto,
-                onValueChange = {
-                    if (it.all { caracter -> caracter.isDigit() }) {
-                        numeroContacto = it
-                        errorNumeroContacto = ""
-                    }
-                },
-                label = "Número de contacto",
-                errorText = errorNumeroContacto.takeIf { it.isNotEmpty() },
-                enabled = !cargando,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Phone,
-                    imeAction = ImeAction.Next
-                )
-            )
-
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                TechTicketPasswordField(
-                    value = contraseña,
-                    onValueChange = {
-                        contraseña = it
-                        errorContraseña = ""
-                    },
-                    label = "Contraseña",
-                    errorText = errorContraseña.takeIf { it.isNotEmpty() },
-                    enabled = !cargando
-                )
-
-                if (errorContraseña.isEmpty()) {
+            AuthCard {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = "Mínimo 8 caracteres, con mayúscula, minúscula, número y carácter especial.",
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        style = MaterialTheme.typography.bodySmall,
+                        text = "Registrarse",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Completa tus datos para continuar",
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-            }
 
-            TechTicketPasswordField(
-                value = confirmarContraseña,
-                onValueChange = {
-                    confirmarContraseña = it
-                    errorConfirmarContraseña = ""
-                },
-                label = "Confirmar contraseña",
-                errorText = errorConfirmarContraseña.takeIf { it.isNotEmpty() },
-                enabled = !cargando
-            )
-
-            if (errorRegistro.isNotEmpty()) {
-                FeedbackBanner(mensaje = errorRegistro, tipo = TipoMensaje.Error)
-            }
-
-            Button(
-                onClick = {
-
-                    if (!cargando && validarFormulario()) {
-
-                        cargando = true
-                        errorRegistro = ""
-
-
-                        scope.launch {
-
-                            val resultado = repository.registrar(
-                                nombres = nombre,
-                                apellidos = apellido,
-                                correo = correo,
-                                numeroContacto = numeroContacto,
-                                contraseña = contraseña
-                            )
-
-                            cargando = false
-
-                            resultado.onSuccess {
-                                onRegistroClick()
-                            }
-
-                            resultado.onFailure { error ->
-                                errorRegistro =
-                                    error.message
-                                        ?: "No se pudo crear la cuenta"
-                            }
-                        }
-                    }
-                },
-                enabled = !cargando,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 52.dp),
-                shape = MaterialTheme.shapes.medium
-            ) {
-                if (cargando) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp,
-                        color = LocalContentColor.current
+                TechTicketTextField(
+                    value = nombre,
+                    onValueChange = {
+                        nombre = it
+                        errorNombre = ""
+                    },
+                    label = "Nombre",
+                    errorText = errorNombre.takeIf { it.isNotEmpty() },
+                    enabled = !cargando,
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Words,
+                        imeAction = ImeAction.Next
                     )
-                    Spacer(Modifier.width(8.dp))
+                )
+
+                TechTicketTextField(
+                    value = apellido,
+                    onValueChange = {
+                        apellido = it
+                        errorApellido = ""
+                    },
+                    label = "Apellido",
+                    errorText = errorApellido.takeIf { it.isNotEmpty() },
+                    enabled = !cargando,
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Words,
+                        imeAction = ImeAction.Next
+                    )
+                )
+
+                TechTicketTextField(
+                    value = correo,
+                    onValueChange = {
+                        correo = it
+                        errorCorreo = ""
+                    },
+                    label = "Correo electrónico",
+                    errorText = errorCorreo.takeIf { it.isNotEmpty() },
+                    enabled = !cargando,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Email,
+                        imeAction = ImeAction.Next
+                    )
+                )
+
+                TechTicketTextField(
+                    value = numeroContacto,
+                    onValueChange = {
+                        if (it.all { caracter -> caracter.isDigit() }) {
+                            numeroContacto = it
+                            errorNumeroContacto = ""
+                        }
+                    },
+                    label = "Número de contacto",
+                    errorText = errorNumeroContacto.takeIf { it.isNotEmpty() },
+                    enabled = !cargando,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Phone,
+                        imeAction = ImeAction.Next
+                    )
+                )
+
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    TechTicketPasswordField(
+                        value = contraseña,
+                        onValueChange = {
+                            contraseña = it
+                            errorContraseña = ""
+                        },
+                        label = "Contraseña",
+                        errorText = errorContraseña.takeIf { it.isNotEmpty() },
+                        enabled = !cargando
+                    )
+
+                    if (errorContraseña.isEmpty()) {
+                        Text(
+                            text = "Mínimo 8 caracteres, con mayúscula, minúscula, número y carácter especial.",
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
 
-                Text(
-                    text = if (cargando) {
-                        "Creando cuenta..."
-                    } else {
-                        "Crear cuenta"
+                TechTicketPasswordField(
+                    value = confirmarContraseña,
+                    onValueChange = {
+                        confirmarContraseña = it
+                        errorConfirmarContraseña = ""
                     },
-                    style = MaterialTheme.typography.labelLarge
+                    label = "Confirmar contraseña",
+                    errorText = errorConfirmarContraseña.takeIf { it.isNotEmpty() },
+                    enabled = !cargando
                 )
+
+                if (errorRegistro.isNotEmpty()) {
+                    FeedbackBanner(mensaje = errorRegistro, tipo = TipoMensaje.Error)
+                }
+
+                Button(
+                    onClick = {
+
+                        if (!cargando && validarFormulario()) {
+
+                            cargando = true
+                            errorRegistro = ""
+
+
+                            scope.launch {
+
+                                val resultado = repository.registrar(
+                                    nombres = nombre,
+                                    apellidos = apellido,
+                                    correo = correo,
+                                    numeroContacto = numeroContacto,
+                                    contraseña = contraseña
+                                )
+
+                                cargando = false
+
+                                resultado.onSuccess {
+                                    onRegistroClick()
+                                }
+
+                                resultado.onFailure { error ->
+                                    errorRegistro =
+                                        error.message
+                                            ?: "No se pudo crear la cuenta"
+                                }
+                            }
+                        }
+                    },
+                    enabled = !cargando,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 52.dp),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    if (cargando) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = LocalContentColor.current
+                        )
+                        Spacer(Modifier.width(8.dp))
+                    }
+
+                    Text(
+                        text = if (cargando) {
+                            "Creando cuenta..."
+                        } else {
+                            "Crear cuenta"
+                        },
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
+
+                TextButton(
+                    onClick = onVolverClick,
+                    enabled = !cargando,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                ) {
+                    Text("Ya tengo una cuenta")
+                }
             }
 
-            TextButton(
-                onClick = onVolverClick,
-                enabled = !cargando,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            ) {
-                Text("Ya tengo una cuenta")
-            }
+            Spacer(Modifier.height(24.dp))
+
+            AuthFooter()
         }
-
-        Spacer(Modifier.height(24.dp))
-
-        AuthFooter()
     }
 }
