@@ -77,12 +77,26 @@ fun DetalleCasoScreen(
                     categoriaSeleccionada = resultado.idCategoria
                     estadoSeleccionado = resultado.estado
 
+
                     resultado.idEncargado?.let { id ->
                         repository.obtenerEncargado(id)
                             .onSuccess { nombre ->
                                 nombreEncargado = nombre
+
+                                android.util.Log.d(
+                                    "ENCARGADO_DEBUG",
+                                    "Nombre recibido por la pantalla: $nombre"
+                                )
+                            }
+                            .onFailure { excepcion ->
+                                android.util.Log.e(
+                                    "ENCARGADO_DEBUG",
+                                    "La pantalla no pudo obtener el encargado",
+                                    excepcion
+                                )
                             }
                     }
+
                 }
             }
             .onFailure { excepcion ->

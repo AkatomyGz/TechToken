@@ -58,8 +58,13 @@ class CasosRepository {
     }
 
 
-    suspend fun obtenerEncargado(idEncargado: String): Result<String?> {
+
+    suspend fun obtenerEncargado(
+        idEncargado: String
+    ): Result<String?> {
         return runCatching {
+            Log.d("ENCARGADO_DEBUG", "UUID recibido: $idEncargado")
+
             val perfiles = supabase
                 .from("perfiles")
                 .select {
@@ -69,11 +74,31 @@ class CasosRepository {
                 }
                 .decodeList<com.example.techtokensss.Datos.Modelos.Perfil>()
 
-            perfiles.firstOrNull()?.let {
-                "${it.nombres} ${it.apellidos}"
-            }
+            Log.d(
+                "ENCARGADO_DEBUG",
+                "Perfiles encontrados: ${perfiles.size}"
+            )
+
+            val perfil = perfiles.firstOrNull()
+
+            val nombreCompleto = perfil
+                ?.let { "${it.nombres} ${it.apellidos}".trim() }
+
+            Log.d(
+                "ENCARGADO_DEBUG",
+                "Nombre obtenido: $nombreCompleto"
+            )
+
+            nombreCompleto
+        }.onFailure { excepcion ->
+            Log.e(
+                "ENCARGADO_DEBUG",
+                "Error consultando el perfil del encargado",
+                excepcion
+            )
         }
     }
+
 
     suspend fun obtenerUltimosCasos(limite: Long = 3): Result<List<Caso>> {
         return runCatching {
