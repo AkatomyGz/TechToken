@@ -33,6 +33,13 @@ import com.example.techtokensss.Pantallas.RegistroCaso.CrearCasoScreen
 import com.example.techtokensss.Pantallas.Casos.DetalleCasoScreen
 import com.example.techtokensss.Pantallas.CasosTecnico.CasosTecnicoScreen
 
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.unit.dp
+import com.example.techtokensss.ui.components.CircuitBackground
+import com.example.techtokensss.ui.components.screenInsets
+
 @Composable
 fun AppNavigation(
     modoOscuro: Boolean,
@@ -180,17 +187,25 @@ fun AppNavigation(
             // Mientras buscamos el rol
             if (rol == null && error == null) {
 
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
+                CircuitBackground(modifier = Modifier.fillMaxSize()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .screenInsets(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
 
-                    CircularProgressIndicator()
+                        CircularProgressIndicator()
 
-                    Text(
-                        text = "Cargando perfil..."
-                    )
+                        Spacer(Modifier.height(16.dp))
+
+                        Text(
+                            text = "Iniciando sesión...",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
                 }
             }
 
