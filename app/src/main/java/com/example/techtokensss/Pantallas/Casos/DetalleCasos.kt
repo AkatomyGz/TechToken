@@ -1,3 +1,4 @@
+
 package com.example.techtokensss.Pantallas.Casos
 
 import androidx.compose.foundation.BorderStroke
@@ -19,6 +20,9 @@ import com.example.techtokensss.Datos.Modelos.Categoria
 import com.example.techtokensss.Pantallas.CasosTecnico.CasosTecnicoRepository
 import com.example.techtokensss.ui.components.*
 import kotlinx.coroutines.launch
+import com.example.techtokensss.Datos.MondoDBAtlas.TechTokenApi
+import com.example.techtokensss.Datos.Supabase.AuthSupa
+
 
 @Composable
 fun DetalleCasoScreen(
@@ -27,14 +31,11 @@ fun DetalleCasoScreen(
     onVolverClick: () -> Unit,
     onHistorialClick: (String) -> Unit
 ) {
-    // ------------------------------------------------------------------
-    // LÓGICA (sin cambios, salvo `mensajeEsExito`, que solo decide el color
-    // del mensaje y reemplaza el antiguo startsWith("Cambios guardados"))
-    // ------------------------------------------------------------------
     val repository = remember { CasosRepository() }
     val tecnicoRepository = remember { CasosTecnicoRepository() }
     val scope = rememberCoroutineScope()
-
+    val api = remember { TechTokenApi() }
+    val authSupa = remember { AuthSupa() }
     var caso by remember { mutableStateOf<Caso?>(null) }
     var categorias by remember { mutableStateOf<List<Categoria>>(emptyList()) }
     var cargando by remember { mutableStateOf(true) }
@@ -49,10 +50,6 @@ fun DetalleCasoScreen(
 
     var categoriaMenuAbierto by remember { mutableStateOf(false) }
     var estadoMenuAbierto by remember { mutableStateOf(false) }
-
-    var mostrarHistorialProximamente by remember {
-        mutableStateOf(false)
-    }
 
     val estadosDisponibles = listOf(
         "registrado",
@@ -77,26 +74,12 @@ fun DetalleCasoScreen(
                     categoriaSeleccionada = resultado.idCategoria
                     estadoSeleccionado = resultado.estado
 
-
                     resultado.idEncargado?.let { id ->
                         repository.obtenerEncargado(id)
                             .onSuccess { nombre ->
                                 nombreEncargado = nombre
-
-                                android.util.Log.d(
-                                    "ENCARGADO_DEBUG",
-                                    "Nombre recibido por la pantalla: $nombre"
-                                )
-                            }
-                            .onFailure { excepcion ->
-                                android.util.Log.e(
-                                    "ENCARGADO_DEBUG",
-                                    "La pantalla no pudo obtener el encargado",
-                                    excepcion
-                                )
                             }
                     }
-
                 }
             }
             .onFailure { excepcion ->
@@ -120,9 +103,6 @@ fun DetalleCasoScreen(
         .find { it.idCategoria == categoriaSeleccionada }
         ?.nombre ?: "Selecciona una categoría"
 
-    // ------------------------------------------------------------------
-    // INTERFAZ
-    // ------------------------------------------------------------------
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -134,7 +114,9 @@ fun DetalleCasoScreen(
     ) {
         TechTicketTopBar(
             titulo = "Detalle del caso",
-            subtitulo = caso?.let { "Caso #${it.idCaso.take(8)}" },
+            subtitulo = caso?.let {
+                "Caso #${it.idCaso.take(8)}"
+            },
             onVolverClick = onVolverClick
         )
 
@@ -160,7 +142,7 @@ fun DetalleCasoScreen(
         } else {
             caso?.let { actual ->
 
-                // ---------------- Resumen ----------------
+                // Resumen del caso
                 TarjetaSeccion {
                     StatusChip(estado = actual.estado)
 
@@ -170,7 +152,9 @@ fun DetalleCasoScreen(
                         color = MaterialTheme.colorScheme.onSurface
                     )
 
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    )
 
                     InfoRow(
                         titulo = "Descripción",
@@ -178,7 +162,7 @@ fun DetalleCasoScreen(
                     )
                 }
 
-                // ---------------- Información ----------------
+                // Información general
                 TarjetaSeccion(titulo = "Información del caso") {
                     InfoRow(
                         titulo = "Categoría actual",
@@ -213,7 +197,7 @@ fun DetalleCasoScreen(
                     )
                 }
 
-                // ---------------- Gestión (solo técnicos) ----------------
+                // Gestión exclusiva del técnico
                 if (esTecnico) {
                     TarjetaSeccion(titulo = "Gestionar caso") {
                         Text(
@@ -226,7 +210,9 @@ fun DetalleCasoScreen(
                             etiqueta = "Categoría",
                             valor = nombreCategoriaSeleccionada,
                             expandido = categoriaMenuAbierto,
-                            onExpandidoChange = { categoriaMenuAbierto = it }
+                            onExpandidoChange = {
+                                categoriaMenuAbierto = it
+                            }
                         ) {
                             categorias.forEach { categoria ->
                                 DropdownMenuItem(
@@ -247,7 +233,9 @@ fun DetalleCasoScreen(
                             etiqueta = "Estado",
                             valor = formatearEstado(estadoSeleccionado),
                             expandido = estadoMenuAbierto,
-                            onExpandidoChange = { estadoMenuAbierto = it }
+                            onExpandidoChange = {
+                                estadoMenuAbierto = it
+                            }
                         ) {
                             estadosDisponibles.forEach { estado ->
                                 DropdownMenuItem(
@@ -264,56 +252,121 @@ fun DetalleCasoScreen(
                         }
 
                         Button(
+
                             onClick = {
                                 scope.launch {
                                     guardando = true
                                     mensaje = null
+                                    mensajeEsExito = false
 
-                                    val resultado =
-                                        tecnicoRepository.actualizarCaso(
-                                            idCaso = actual.idCaso,
-                                            idCategoria = categoriaSeleccionada,
-                                            estado = estadoSeleccionado
-                                        )
+                                    // Conservar los valores anteriores para el historial.
+                                    val estadoAnterior = actual.estado
+                                    val categoriaAnterior = actual.idCategoria
 
-                                    if (resultado.isSuccess) {
-                                        repository.obtenerCasoPorId(idCaso)
-                                            .onSuccess { actualizado ->
-                                                if (actualizado != null) {
-                                                    caso = actualizado
-                                                    categoriaSeleccionada =
-                                                        actualizado.idCategoria
-                                                    estadoSeleccionado =
-                                                        actualizado.estado
-                                                }
-                                            }
+                                    val estadoCambio = estadoAnterior != estadoSeleccionado
+                                    val categoriaCambio = categoriaAnterior != categoriaSeleccionada
 
-                                        mensajeEsExito = true
-                                        mensaje = "Cambios guardados correctamente."
-                                    } else {
+                                    if (!estadoCambio && !categoriaCambio) {
+                                        mensaje = "No hay cambios para guardar."
                                         mensajeEsExito = false
-                                        mensaje = resultado.exceptionOrNull()
-                                            ?.message
+                                        guardando = false
+                                        return@launch
+                                    }
+
+                                    val resultado = tecnicoRepository.actualizarCaso(
+                                        idCaso = actual.idCaso,
+                                        idCategoria = categoriaSeleccionada,
+                                        estado = estadoSeleccionado
+                                    )
+
+                                    if (resultado.isFailure) {
+                                        mensaje = resultado.exceptionOrNull()?.message
                                             ?: "No se pudieron guardar los cambios."
+                                        mensajeEsExito = false
+                                        guardando = false
+                                        return@launch
+                                    }
+
+                                    // Los cambios ya se guardaron en Supabase.
+                                    // Ahora intentamos registrar la novedad.
+                                    val cambios = mutableMapOf<String, String>()
+                                    val descripciones = mutableListOf<String>()
+
+                                    if (estadoCambio) {
+                                        cambios["estado_anterior"] = estadoAnterior
+                                        cambios["estado_nuevo"] = estadoSeleccionado
+
+                                        descripciones.add(
+                                            "Estado: ${formatearEstado(estadoAnterior)} → " +
+                                                    formatearEstado(estadoSeleccionado)
+                                        )
+                                    }
+
+                                    if (categoriaCambio) {
+                                        val nombreAnterior = categorias
+                                            .find { it.idCategoria == categoriaAnterior }
+                                            ?.nombre ?: categoriaAnterior
+
+                                        val nombreNuevo = categorias
+                                            .find { it.idCategoria == categoriaSeleccionada }
+                                            ?.nombre ?: categoriaSeleccionada
+
+                                        cambios["categoria_anterior"] = nombreAnterior
+                                        cambios["categoria_nueva"] = nombreNuevo
+
+                                        descripciones.add(
+                                            "Categoría: $nombreAnterior → $nombreNuevo"
+                                        )
+                                    }
+
+                                    val token = authSupa.obtenerTokenActual()
+
+                                    val resultadoHistorial = if (!token.isNullOrBlank()) {
+                                        api.registrarEvento(
+                                            idCaso = actual.idCaso,
+                                            token = token,
+                                            tipoActividad = "caso_actualizado",
+                                            descripcion = descripciones.joinToString(". "),
+                                            cambios = cambios
+                                        )
+                                    } else {
+                                        Result.failure(
+                                            Exception("No se encontró la sesión para registrar el historial.")
+                                        )
+                                    }
+
+                                    // Actualizar la pantalla con los datos guardados.
+                                    repository.obtenerCasoPorId(idCaso)
+                                        .onSuccess { actualizado ->
+                                            if (actualizado != null) {
+                                                caso = actualizado
+                                                categoriaSeleccionada = actualizado.idCategoria
+                                                estadoSeleccionado = actualizado.estado
+                                            }
+                                        }
+
+                                    if (resultadoHistorial.isSuccess) {
+                                        mensaje = "Cambios guardados y novedad registrada en el historial."
+                                        mensajeEsExito = true
+                                    } else {
+                                        mensaje = "Los cambios se guardaron, pero no se pudo registrar " +
+                                                "la novedad en el historial. " +
+                                                (resultadoHistorial.exceptionOrNull()?.message ?: "")
+                                        mensajeEsExito = false
                                     }
 
                                     guardando = false
                                 }
                             },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 52.dp),
-                            shape = MaterialTheme.shapes.medium,
-                            enabled = !guardando &&
-                                    categoriaSeleccionada.isNotBlank() &&
-                                    estadoSeleccionado in estadosDisponibles
-                        ) {
+
+                            ) {
                             if (guardando) {
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(20.dp),
                                     strokeWidth = 2.dp,
                                     color = LocalContentColor.current
                                 )
+
                                 Spacer(Modifier.width(8.dp))
                                 Text("Guardando...")
                             } else {
@@ -334,9 +387,10 @@ fun DetalleCasoScreen(
                     }
                 }
 
+                // Abrir el historial real del caso
                 OutlinedButton(
                     onClick = {
-                        mostrarHistorialProximamente = true
+                        onHistorialClick(actual.idCaso)
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -344,42 +398,15 @@ fun DetalleCasoScreen(
                     shape = MaterialTheme.shapes.medium
                 ) {
                     Icon(
-                        Icons.Filled.History,
+                        imageVector = Icons.Filled.History,
                         contentDescription = null
                     )
+
                     Spacer(Modifier.width(8.dp))
                     Text("Ver historial")
                 }
             }
         }
-    }
-
-    if (mostrarHistorialProximamente) {
-        AlertDialog(
-            onDismissRequest = {
-                mostrarHistorialProximamente = false
-            },
-            title = {
-                Text(text = "Historial")
-            },
-            text = {
-                Text(
-                    text = "¡Esta funcionalidad estará disponible próximamente!"
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        mostrarHistorialProximamente = false
-                    }
-                ) {
-                    Text(text = "Entendido")
-                }
-            },
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface,
-            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-        )
     }
 }
 
@@ -397,7 +424,10 @@ private fun TarjetaSeccion(
             containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface
         ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        border = BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant
+        )
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
@@ -416,7 +446,7 @@ private fun TarjetaSeccion(
     }
 }
 
-/** Selector desplegable con etiqueta. Usa el mismo DropdownMenu que antes. */
+/** Selector desplegable con etiqueta. */
 @Composable
 private fun CampoSelector(
     etiqueta: String,
@@ -425,7 +455,9 @@ private fun CampoSelector(
     onExpandidoChange: (Boolean) -> Unit,
     contenido: @Composable ColumnScope.() -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
         Text(
             text = etiqueta,
             style = MaterialTheme.typography.labelLarge,
@@ -434,12 +466,17 @@ private fun CampoSelector(
 
         Box(modifier = Modifier.fillMaxWidth()) {
             OutlinedButton(
-                onClick = { onExpandidoChange(true) },
+                onClick = {
+                    onExpandidoChange(true)
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 52.dp),
                 shape = MaterialTheme.shapes.medium,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                border = BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outline
+                ),
                 contentPadding = PaddingValues(horizontal = 16.dp)
             ) {
                 Text(
@@ -459,7 +496,9 @@ private fun CampoSelector(
 
             DropdownMenu(
                 expanded = expandido,
-                onDismissRequest = { onExpandidoChange(false) },
+                onDismissRequest = {
+                    onExpandidoChange(false)
+                },
                 content = contenido
             )
         }

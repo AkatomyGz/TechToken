@@ -3,17 +3,16 @@ package com.example.techtokensss.Pantallas.CasosTecnico
 
 import com.example.techtokensss.Datos.Modelos.Caso
 import com.example.techtokensss.Datos.Supabase.supabase
+import com.example.techtokensss.Pantallas.Dashboard.EstadisticasCasos
+
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
-import io.github.jan.supabase.postgrest.postgrest
-import android.util.Log
-import com.example.techtokensss.Pantallas.Dashboard.EstadisticasCasos
 
 class CasosTecnicoRepository {
 
-    // Obtiene únicamente los casos asignados al técnico actual.
     suspend fun obtenerMisCasos(): Result<List<Caso>> {
         return runCatching {
             val usuario = supabase.auth.currentUserOrNull()
@@ -30,15 +29,12 @@ class CasosTecnicoRepository {
         }
     }
 
-    // Obtiene los casos registrados que todavía están disponibles.
     suspend fun obtenerBandeja(): Result<List<Caso>> {
         return runCatching {
             val usuario = supabase.auth.currentUserOrNull()
                 ?: error("No hay una sesión iniciada.")
 
-            Log.d("CASOS_TECNICO", "UUID sesión: ${usuario.id}")
-
-            val resultado = supabase
+            val casosRegistrados = supabase
                 .from("casos")
                 .select {
                     filter {
@@ -47,27 +43,11 @@ class CasosTecnicoRepository {
                 }
                 .decodeList<Caso>()
 
-            Log.d(
-                "CASOS_TECNICO",
-                "Registrados recibidos: ${resultado.size}"
-            )
-
-            val disponibles = resultado.filter {
-                it.idEncargado == null
+            casosRegistrados.filter { caso ->
+                caso.idEncargado == null
             }
-
-            Log.d(
-                "CASOS_TECNICO",
-                "Casos disponibles: ${disponibles.size}"
-            )
-
-            disponibles
         }
     }
-
-    // Reclama un caso únicamente si continúa disponible.
-
-
 
     suspend fun reclamarCaso(idCaso: String): Result<Unit> {
         return runCatching {
@@ -132,7 +112,4 @@ class CasosTecnicoRepository {
             )
         }
     }
-
-
-
 }

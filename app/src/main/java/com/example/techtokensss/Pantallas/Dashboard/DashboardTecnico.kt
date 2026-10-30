@@ -1,3 +1,4 @@
+
 package com.example.techtokensss.Pantallas.Dashboard
 
 import androidx.compose.foundation.BorderStroke
@@ -42,9 +43,7 @@ fun DashboardScreen(
     onConfiguracionClick: () -> Unit,
     onCerrarSesionClick: () -> Unit
 ) {
-    // ------------------------------------------------------------------
-    // LÓGICA Y SUSCRIPCIÓN REALTIME (sin cambios)
-    // ------------------------------------------------------------------
+    // Lógica y suscripción Realtime
     val repository = remember { CasosTecnicoRepository() }
     val scope = rememberCoroutineScope()
 
@@ -99,15 +98,15 @@ fun DashboardScreen(
         }
     }
 
-    // Mientras carga o si hubo error, no se muestran números que podrían engañar.
+    // Mientras carga o si hubo error, no se muestran números engañosos.
     val hayDatos = !cargando && error == null
-    fun valor(n: Int): String = if (hayDatos) n.toString() else "–"
+
+    fun valor(n: Int): String =
+        if (hayDatos) n.toString() else "–"
 
     val coloresEstado = TechTicketTheme.colors
 
-    // ------------------------------------------------------------------
-    // INTERFAZ
-    // ------------------------------------------------------------------
+    // Interfaz
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -146,7 +145,9 @@ fun DashboardScreen(
                 }
             )
 
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
                 Text(
                     text = "Panel del técnico",
                     style = MaterialTheme.typography.headlineMedium,
@@ -171,14 +172,16 @@ fun DashboardScreen(
                     imageVector = Icons.Outlined.Folder,
                     contentDescription = null
                 )
+
                 Spacer(Modifier.width(8.dp))
+
                 Text(
                     text = "Ver casos y bandeja",
                     style = MaterialTheme.typography.labelLarge
                 )
             }
 
-            // Distribución
+            // Distribución de casos
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.large,
@@ -186,7 +189,10 @@ fun DashboardScreen(
                     containerColor = MaterialTheme.colorScheme.surface,
                     contentColor = MaterialTheme.colorScheme.onSurface
                 ),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                border = BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outlineVariant
+                )
             ) {
                 Column(
                     modifier = Modifier
@@ -213,7 +219,9 @@ fun DashboardScreen(
                             ErrorState(
                                 mensaje = error.orEmpty(),
                                 modifier = Modifier.fillMaxWidth(),
-                                onReintentar = { cargarEstadisticas() }
+                                onReintentar = {
+                                    cargarEstadisticas()
+                                }
                             )
                         }
 
@@ -230,7 +238,9 @@ fun DashboardScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 contentAlignment = Alignment.Center
                             ) {
-                                GraficoDona(estadisticas = estadisticas)
+                                GraficoDona(
+                                    estadisticas = estadisticas
+                                )
                             }
                         }
                     }
@@ -297,7 +307,9 @@ fun DashboardScreen(
 
         MenuLateralOverlay(
             visible = menuAbierto,
-            onDismiss = { menuAbierto = false },
+            onDismiss = {
+                menuAbierto = false
+            },
             onPerfilClick = {
                 menuAbierto = false
                 onPerfilClick()
@@ -343,13 +355,20 @@ private fun GraficoDona(
     Box(
         modifier = modifier
             .size(190.dp)
-            .semantics { contentDescription = descripcion },
+            .semantics {
+                contentDescription = descripcion
+            },
         contentAlignment = Alignment.Center
     ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
+        Canvas(
+            modifier = Modifier.fillMaxSize()
+        ) {
             val grosor = 26.dp.toPx()
             val origen = Offset(grosor / 2f, grosor / 2f)
-            val tamano = Size(size.width - grosor, size.height - grosor)
+            val tamano = Size(
+                size.width - grosor,
+                size.height - grosor
+            )
             val total = estadisticas.total.toFloat()
 
             // Anillo de fondo
@@ -364,7 +383,10 @@ private fun GraficoDona(
             )
 
             if (total > 0f) {
-                val visibles = segmentos.count { it.first > 0 }
+                val visibles = segmentos.count {
+                    it.first > 0
+                }
+
                 val hueco = if (visibles > 1) 3f else 0f
                 var anguloInicial = -90f
 
@@ -388,12 +410,15 @@ private fun GraficoDona(
             }
         }
 
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Text(
                 text = estadisticas.total.toString(),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
+
             Text(
                 text = "asignados",
                 style = MaterialTheme.typography.bodySmall,
@@ -404,8 +429,8 @@ private fun GraficoDona(
 }
 
 /**
- * Tarjeta con una cantidad. Se mantiene pública y con los mismos tres primeros
- * parámetros; [colorIndicador] es opcional.
+ * Tarjeta con una cantidad. Se mantiene pública y con los mismos
+ * parámetros; colorIndicador es opcional.
  */
 @Composable
 fun TarjetaEstado(
@@ -421,7 +446,10 @@ fun TarjetaEstado(
             containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface
         ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        border = BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant
+        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -435,7 +463,10 @@ fun TarjetaEstado(
                     Box(
                         modifier = Modifier
                             .size(12.dp)
-                            .background(colorIndicador, CircleShape)
+                            .background(
+                                colorIndicador,
+                                CircleShape
+                            )
                     )
                 }
 

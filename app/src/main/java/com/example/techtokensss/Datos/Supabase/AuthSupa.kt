@@ -53,4 +53,12 @@ class AuthSupa {
             Result.failure(e)
         }
     }
+
+    suspend fun obtenerTokenActual(): String? {
+        return try {
+            supabase.auth.currentSessionOrNull()?.accessToken
+        } catch (e: Exception) {
+            null
+        }
+    }
 }

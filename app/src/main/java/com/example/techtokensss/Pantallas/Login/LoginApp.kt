@@ -14,15 +14,11 @@ import androidx.compose.ui.unit.dp
 import com.example.techtokensss.ui.components.*
 import kotlinx.coroutines.launch
 
-
 @Composable
 fun LoginScreen(
     onLoginClick: suspend (String, String) -> Result<Unit>,
     onRegisClick: () -> Unit
 ) {
-    // ------------------------------------------------------------------
-    // LÓGICA (igual que antes; se añade solo `cargando` para el indicador)
-    // ------------------------------------------------------------------
     var correo by remember { mutableStateOf("") }
     var contraseña by remember { mutableStateOf("") }
     var mensajeError by remember { mutableStateOf<String?>(null) }
@@ -30,10 +26,9 @@ fun LoginScreen(
 
     val scope = rememberCoroutineScope()
 
-    // ------------------------------------------------------------------
-    // INTERFAZ
-    // ------------------------------------------------------------------
-    CircuitBackground(modifier = Modifier.fillMaxSize()) {
+    CircuitBackground(
+        modifier = Modifier.fillMaxSize()
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -43,21 +38,26 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            BrandHeader(subtitulo = "Bienvenido de nuevo")
+            BrandHeader(
+                subtitulo = "Bienvenido de nuevo"
+            )
 
-            Spacer(Modifier.height(32.dp))
+            Spacer(
+                modifier = Modifier.height(32.dp)
+            )
 
             AuthCard {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
                     Text(
                         text = "Iniciar sesión",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface
+                        style = MaterialTheme.typography.headlineSmall
                     )
+
                     Text(
                         text = "Ingresa tus datos para continuar",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = MaterialTheme.typography.bodyMedium
                     )
                 }
 
@@ -85,8 +85,11 @@ fun LoginScreen(
                     enabled = !cargando
                 )
 
-                mensajeError?.let {
-                    FeedbackBanner(mensaje = it, tipo = TipoMensaje.Error)
+                mensajeError?.let { mensaje ->
+                    FeedbackBanner(
+                        mensaje = mensaje,
+                        tipo = TipoMensaje.Error
+                    )
                 }
 
                 Button(
@@ -96,17 +99,22 @@ fun LoginScreen(
                                 cargando = true
                                 mensajeError = null
 
-                                val resultado = onLoginClick(
-                                    correo,
-                                    contraseña
-                                )
+                                try {
+                                    val resultado = onLoginClick(
+                                        correo,
+                                        contraseña
+                                    )
 
-                                resultado.onFailure {
+                                    resultado.onFailure {
+                                        mensajeError =
+                                            "Correo o contraseña incorrectos."
+                                    }
+                                } catch (e: Exception) {
                                     mensajeError =
-                                        "Correo o contraseña incorrectos."
+                                        "No se pudo iniciar sesión. Inténtalo nuevamente."
+                                } finally {
+                                    cargando = false
                                 }
-
-                                cargando = false
                             }
                         }
                     },
@@ -122,7 +130,11 @@ fun LoginScreen(
                             strokeWidth = 2.dp,
                             color = LocalContentColor.current
                         )
-                        Spacer(Modifier.width(8.dp))
+
+                        Spacer(
+                            modifier = Modifier.width(8.dp)
+                        )
+
                         Text(
                             text = "Iniciando sesión...",
                             style = MaterialTheme.typography.labelLarge
@@ -150,7 +162,9 @@ fun LoginScreen(
                 }
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(
+                modifier = Modifier.height(24.dp)
+            )
 
             AuthFooter()
         }

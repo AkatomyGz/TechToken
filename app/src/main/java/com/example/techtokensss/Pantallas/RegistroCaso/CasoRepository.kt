@@ -1,5 +1,6 @@
 package com.example.techtokensss.Pantallas.RegistroCaso
 
+import com.example.techtokensss.Datos.Modelos.Caso
 import com.example.techtokensss.Datos.Modelos.Categoria
 import com.example.techtokensss.Datos.Modelos.NuevoCaso
 import com.example.techtokensss.Datos.Supabase.supabase
@@ -14,24 +15,15 @@ class CasoRepository {
         asunto: String,
         descripcion: String,
         nombreCategoria: String
-    ): Result<Unit> {
-
+    ): Result<String> {
         return try {
-
-            // Obtener el usuario actualmente autenticado
-
+            // 1. Obtener el usuario autenticado.
             val usuario = supabase.auth.currentUserOrNull()
-
-            if (usuario == null) {
-
-                return Result.failure(
+                ?: return Result.failure(
                     Exception("No hay un usuario autenticado.")
                 )
-            }
 
-
-            // Buscar la categoría seleccionada
-
+            // 2. Buscar la categoría seleccionada.
             val categoria = supabase
                 .from("categorias")
                 .select(columns = Columns.ALL) {
@@ -41,9 +33,7 @@ class CasoRepository {
                 }
                 .decodeSingle<Categoria>()
 
-
-            // Preparar los datos del nuevo caso
-
+            // 3. Preparar el nuevo caso.
             val nuevoCaso = NuevoCaso(
                 idCreador = usuario.id,
                 idCategoria = categoria.idCategoria,
@@ -51,39 +41,32 @@ class CasoRepository {
                 descripcion = descripcion
             )
 
-
-            // Insertar el caso en Supabase
-
-            supabase
+            // 4. Insertar el caso y recuperar el registro creado.
+            val casoCreado = supabase
                 .from("casos")
-                .insert(nuevoCaso)
+                .insert(nuevoCaso) {
+                    select()
+                }
+                .decodeSingle<Caso>()
 
-
-            Result.success(Unit)
+            // 5. Devolver el identificador del caso.
+            Result.success(casoCreado.idCaso)
 
         } catch (e: Exception) {
-
             Result.failure(e)
         }
     }
 
-
     suspend fun obtenerCategorias(): Result<List<Categoria>> {
-
         return try {
-
-            // Obtener todas las categorías
-
             val categorias = supabase
                 .from("categorias")
                 .select(columns = Columns.ALL)
                 .decodeList<Categoria>()
 
-
             Result.success(categorias)
 
         } catch (e: Exception) {
-
             Result.failure(e)
         }
     }
